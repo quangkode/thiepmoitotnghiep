@@ -8,7 +8,24 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
 2. **Thiệp** — ấn vào vòng tròn thì màn cổng mờ đi, hiện tấm "Save the date" ở dạng trang cuộn.
 3. **Màn xác nhận tham dự** — ngắm thiệp ~5 giây là **chuyển hẳn sang màn này**, một chiều, không quay lại.
    Gồm lời cảm ơn, "Bạn là ai?", tích **Có / Không**; tích Có mới hiện phần chọn giờ đến (8h–12h, mỗi 5 phút).
-   Gửi xong hiện màn cảm ơn; lần sau mở lại vẫn nhớ, muốn đổi thì bấm "Sửa câu trả lời".
+4. **Thư cảm ơn + cuộn phim** — gửi xong chuyển sang màn thư. Ai chọn *Có* và ai chọn *Không*
+   đọc hai lá thư khác nhau. Bên phải là dải phim ảnh tự trôi lên không ngừng.
+   Lần sau khách mở lại thì vào thẳng thư này, muốn đổi thì bấm "Sửa câu trả lời".
+
+## Thay ảnh cho cuộn phim
+
+Bỏ ảnh vào [assets/images/photos/](assets/images/photos/), đặt tên `1.jpg`, `2.jpg`, … `8.jpg`.
+Khung nào chưa có ảnh thì để trống, không lỗi gì cả.
+
+- Ảnh **dọc** hợp nhất (khung tỉ lệ 3:4), ảnh ngang sẽ bị cắt hai bên.
+- Muốn nhiều/ít ảnh hơn hoặc đổi tên file: sửa mảng `photos` trong [js/main.js](js/main.js).
+- Muốn phim chạy nhanh/chậm: sửa `44s` ở `animation: film-roll` trong [css/style.css](css/style.css).
+
+## Sửa lời thư
+
+Toàn bộ chữ nằm trong `LETTERS` ở đầu [js/main.js](js/main.js) — `co` là thư cho người đến được,
+`khong` là thư cho người bận. Mỗi dòng trong mảng là một đoạn văn.
+Viết `{ten}`, `{gio}`, `{ngay}`, `{diadiem}` thì tự thay bằng thông tin khách điền.
 
 ## Khi quiz báo "Chưa gửi được…"
 

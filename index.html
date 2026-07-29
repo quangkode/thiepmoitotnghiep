@@ -142,16 +142,31 @@
           <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
         </form>
 
-        <!-- Màn hình sau khi gửi xong -->
-        <div class="quiz__done" id="quizDone" hidden>
-          <p class="quiz__done-mark" aria-hidden="true">✓</p>
-          <h2 class="quiz__thanks" id="doneTitle">Nhận được rồi nhé!</h2>
-          <p class="quiz__lead" id="doneLead"></p>
-          <div class="quiz__done-actions">
-            <button class="btn btn--ghost" type="button" id="editBtn">Sửa câu trả lời</button>
-          </div>
-        </div>
       </div>
+    </section>
+
+    <!-- ================================================================
+         MÀN 4 — THƯ CẢM ƠN + CUỘN PHIM TỰ TRÔI LÊN
+         ================================================================ -->
+    <section class="letter" id="letter" tabindex="-1" hidden>
+
+      <div class="letter__paper">
+        <p class="letter__eyebrow" id="letterEyebrow">Thư cảm ơn</p>
+        <h2 class="letter__title" id="letterTitle"></h2>
+
+        <div class="letter__body" id="letterBody"></div>
+
+        <p class="letter__sign-label">Thương mến,</p>
+        <p class="letter__sign" id="letterSign"></p>
+
+        <button class="letter__edit" type="button" id="editBtn">Sửa câu trả lời</button>
+      </div>
+
+      <!-- cuộn phim: ảnh tự trôi lên, thay ảnh trong assets/images/photos/ -->
+      <div class="film" aria-hidden="true">
+        <div class="film__track" id="filmTrack"></div>
+      </div>
+
     </section>
 
   </div>

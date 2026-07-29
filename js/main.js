@@ -8,6 +8,7 @@ const CONFIG = {
   startsAt: '2026-08-02T08:00:00+07:00',   // giờ VN
   venue: 'Hội trường Nguyễn Văn Đạo, Đại học Quốc gia Hà Nội',
   address: '144 Xuân Thủy, Cầu Giấy, Hà Nội',
+  dateText: 'Chủ nhật ngày 2 tháng 8',
 
   /* Nơi nhận câu trả lời — dán link Google Apps Script (dạng .../exec) vào đây.
      Cách lấy: xem README.md và docs/apps-script.gs */
@@ -20,11 +21,55 @@ const CONFIG = {
 
   /* Xem thiệp bao lâu thì chuyển sang màn xác nhận (mili giây) */
   quizDelay: 5000,
+
+  /* Ảnh chạy trên cuộn phim — bỏ file vào assets/images/photos/ đúng tên này.
+     Chưa có file thì khung hiện chỗ trống, không lỗi gì cả. */
+  photos: ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg'],
+  photoDir: '/assets/images/photos/',
+};
+
+/* ==========================================================================
+   LỜI THƯ — SỬA THOẢI MÁI Ở ĐÂY
+   Chỗ nào để {ten}, {gio}, {ngay}, {diadiem} thì tự thay bằng thông tin khách điền.
+   Mỗi dòng trong mảng là một đoạn văn.
+   ========================================================================== */
+const LETTERS = {
+  /* Khách chọn CÓ đến */
+  co: {
+    title: 'Hẹn gặp bạn ngày hôm đó',
+    paragraphs: [
+      'Gửi {ten},',
+      'Cảm ơn bạn đã nhận lời tới dự buổi lễ tốt nghiệp của mình. Bốn năm trôi qua nhanh hơn mình tưởng, và tới ngày cầm được tấm bằng trên tay, mình mới thấy rõ một điều: chặng đường đó chưa bao giờ mình đi một mình.',
+      'Cảm ơn vì những lần bạn chịu nghe mình than, những lần kéo mình dậy lúc mọi thứ rối tung, và cả những chuyện nhỏ xíu mà giờ nhớ lại vẫn thấy buồn cười.',
+      'Hẹn gặp bạn lúc <strong>{gio}</strong>, {ngay} tại {diadiem}. Nhớ mặc đẹp vào để còn chụp ảnh nhé!',
+    ],
+  },
+
+  /* Khách chọn KHÔNG đến được */
+  khong: {
+    title: 'Cảm ơn vì đã đồng hành',
+    paragraphs: [
+      'Gửi {ten},',
+      'Không sao đâu, mình hiểu mà. Thật ra điều mình muốn nói không nằm ở chuyện hôm đó bạn có mặt hay không, mà là cảm ơn bạn đã đồng hành cùng mình suốt quãng đường vừa rồi.',
+      'Cảm ơn vì đã ở đó những lúc mình chông chênh nhất, vì những lời động viên đúng lúc, và vì đã tin mình sẽ làm được — kể cả khi chính mình còn chưa tin.',
+      'Tấm bằng này có một phần của bạn trong đó. Hẹn gặp bạn một ngày gần nhất, mình mời cà phê!',
+    ],
+  },
 };
 
 const STORAGE_KEY = 'rsvp:tran-minh-quang';
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (sel) => document.querySelector(sel);
+
+/** Câu trả lời đã lưu trong máy khách (null nếu chưa trả lời). */
+function readSaved() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    return saved && saved.name ? saved : null;
+  } catch (e) {
+    return null;
+  }
+}
 
 /* --------------------------------------------------------------------------
    1. Dấu chấm hỏi bay bay ở màn cổng
@@ -83,24 +128,81 @@ function openInvite(gate, invite, btn) {
 }
 
 /* --------------------------------------------------------------------------
-   3. Chuyển sang màn xác nhận tham dự (một chiều, không quay lại)
+   3. Chuyển màn (một chiều, không quay lại)
    -------------------------------------------------------------------------- */
+/** Rời màn thiệp: ai trả lời rồi thì vào thẳng thư cảm ơn, chưa thì vào màn xác nhận. */
 function showQuiz(invite) {
-  const quiz = $('#quiz');
-  if (!quiz || !quiz.hidden) return;
+  const saved = readSaved();
+  const target = saved ? $('#letter') : $('#quiz');
+  if (saved) fillLetter(saved);
 
   invite.classList.add('is-out');
 
   const swap = () => {
     invite.hidden = true;
-    quiz.hidden = false;
-    quiz.classList.add('is-in');
-    window.scrollTo(0, 0);
-    quiz.focus({ preventScroll: true });
+    openScreen(target);
   };
 
   if (reduceMotion) swap();
   else setTimeout(swap, 500);   // khớp với transition của .invite.is-out
+}
+
+function openScreen(el) {
+  if (!el || !el.hidden) return;
+  el.hidden = false;
+  el.classList.add('is-in');
+  window.scrollTo(0, 0);
+  el.focus({ preventScroll: true });
+}
+
+function closeScreen(el) {
+  if (!el) return;
+  el.hidden = true;
+  el.classList.remove('is-in');
+}
+
+/* --------------------------------------------------------------------------
+   3b. Thư cảm ơn + cuộn phim
+   -------------------------------------------------------------------------- */
+function fillLetter(answer) {
+  const tpl = LETTERS[answer.attend === 'co' ? 'co' : 'khong'];
+  const fill = (s) => s
+    .replaceAll('{ten}', answer.name || 'bạn')
+    .replaceAll('{gio}', answer.time || '')
+    .replaceAll('{ngay}', CONFIG.dateText)
+    .replaceAll('{diadiem}', CONFIG.venue);
+
+  $('#letterTitle').textContent = tpl.title;
+  $('#letterBody').innerHTML = tpl.paragraphs.map((p) => `<p>${fill(p)}</p>`).join('');
+  $('#letterSign').textContent = CONFIG.hostName;
+}
+
+/** Dựng cuộn phim: nhân đôi danh sách ảnh để chạy vòng lặp không thấy mối nối. */
+function buildFilm() {
+  const track = $('#filmTrack');
+  if (!track) return;
+
+  const frag = document.createDocumentFragment();
+
+  for (let copy = 0; copy < 2; copy++) {
+    CONFIG.photos.forEach((file, i) => {
+      const frame = document.createElement('div');
+      frame.className = 'film__frame is-empty';
+      frame.dataset.label = String(i + 1);
+
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.alt = '';
+      img.addEventListener('load', () => frame.classList.remove('is-empty'));
+      img.addEventListener('error', () => img.remove());   // chưa có ảnh -> để khung trống
+      img.src = CONFIG.photoDir + file;
+
+      frame.appendChild(img);
+      frag.appendChild(frame);
+    });
+  }
+
+  track.appendChild(frag);
 }
 
 /* --------------------------------------------------------------------------
@@ -183,9 +285,8 @@ function setupQuiz() {
   const status = $('#formStatus');
   const submitBtn = $('#submitBtn');
   const intro = $('#quizIntro');
-  const done = $('#quizDone');
-  const doneTitle = $('#doneTitle');
-  const doneLead = $('#doneLead');
+  const quiz = $('#quiz');
+  const letter = $('#letter');
   const nameError = $('#nameError');
   const attendError = $('#attendError');
 
@@ -207,45 +308,37 @@ function setupQuiz() {
 
   nameInput.addEventListener('input', () => { nameError.hidden = true; });
 
-  /* --- màn hình "đã gửi" --- */
-  function showDone(answer) {
-    const time = answer.time ? ` lúc ${answer.time}` : '';
-    doneTitle.textContent = answer.attend === 'co' ? 'Hẹn gặp bạn nhé!' : 'Cảm ơn bạn đã trả lời';
-    doneLead.textContent =
-      answer.attend === 'co'
-        ? `${answer.name} ơi, mình chờ bạn${time} ngày 2/8 tại ${CONFIG.venue} nhé.`
-        : `Tiếc thật, nhưng không sao đâu ${answer.name}. Hẹn gặp bạn dịp khác nhé!`;
-
-    intro.hidden = true;
-    form.hidden = true;
-    done.hidden = false;
+  /* --- gửi xong -> sang màn thư cảm ơn --- */
+  function goToLetter(answer) {
+    fillLetter(answer);
+    closeScreen(quiz);
+    letter.hidden = true;              // openScreen chỉ chạy khi đang ẩn
+    openScreen(letter);
   }
 
-  function showForm(answer) {
-    if (answer) {
-      nameInput.value = answer.name || '';
-      attendInputs.forEach((i) => { i.checked = i.value === answer.attend; });
-      timeField.hidden = answer.attend !== 'co';
-      if (answer.time) {
-        const [h, m] = answer.time.split(':');
+  /* --- quay lại sửa câu trả lời --- */
+  let saved = readSaved();
+
+  $('#editBtn')?.addEventListener('click', () => {
+    if (saved) {
+      nameInput.value = saved.name || '';
+      attendInputs.forEach((i) => { i.checked = i.value === saved.attend; });
+      timeField.hidden = saved.attend !== 'co';
+      if (saved.time) {
+        const [h, m] = saved.time.split(':');
         hourSel.value = h;
         fillMinutes(minuteSel, h, m);
       }
     }
-    done.hidden = true;
-    intro.hidden = false;
-    form.hidden = false;
+
     status.textContent = '';
     status.className = 'form-status';
-  }
+    intro.hidden = false;
+    form.hidden = false;
 
-  // Đã trả lời từ lần trước -> hiện luôn màn hình cảm ơn
-  let saved = null;
-  try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (e) { saved = null; }
-  if (saved && saved.name) showDone(saved);
-
-  $('#editBtn')?.addEventListener('click', () => {
-    showForm(saved);
+    closeScreen(letter);
+    quiz.hidden = true;
+    openScreen(quiz);
     nameInput.focus();
   });
 
@@ -276,7 +369,7 @@ function setupQuiz() {
       await sendAnswer({ ...answer, device: navigator.userAgent });
       saved = { ...answer, at: new Date().toISOString() };
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch (e) { /* bỏ qua */ }
-      showDone(saved);
+      goToLetter(saved);
     } catch (err) {
       status.className = 'form-status is-error';
       status.textContent = 'Chưa gửi được. Bạn thử lại giúp mình, hoặc nhắn thẳng cho Quang nhé!';
@@ -296,6 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = $('#openBtn');
 
   spawnQuestionMarks($('#questions'));
+  buildFilm();
   setupQuiz();
 
   btn?.addEventListener('click', () => openInvite(gate, invite, btn));

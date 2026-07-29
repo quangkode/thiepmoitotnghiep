@@ -480,6 +480,155 @@ body.is-locked { overflow: hidden; height: 100svh; }
 
 .quiz__done-actions { margin-top: 24px; }
 
+/* ---------- 5d. Màn thư cảm ơn + cuộn phim ---------- */
+.letter {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 4vh 14px calc(4vh + env(safe-area-inset-bottom));
+  overflow: hidden;              /* thư cuộn bên trong tờ giấy, trang không cuộn */
+}
+
+.letter.is-in { animation: fade-up 0.6s ease both; }
+.letter:focus { outline: none; }
+
+/* --- tờ thư --- */
+.letter__paper {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 20px 26px;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.09);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(17, 17, 17, 0.08);
+}
+
+.letter__eyebrow {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.letter__title {
+  margin-top: 6px;
+  font-family: "Dancing Script", "Segoe Script", cursive;
+  font-weight: 700;
+  font-size: clamp(27px, 8vw, 34px);
+  line-height: 1.25;
+}
+
+.letter__body {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: rgba(17, 17, 17, 0.78);
+}
+
+.letter__body p + p { margin-top: 13px; }
+.letter__body strong { font-weight: 600; color: var(--ink); }
+
+.letter__sign-label {
+  margin-top: 22px;
+  font-size: 13px;
+  color: rgba(17, 17, 17, 0.55);
+}
+
+.letter__sign {
+  margin-top: 2px;
+  font-family: "Dancing Script", "Segoe Script", cursive;
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.3;
+}
+
+.letter__edit {
+  margin-top: 22px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgba(17, 17, 17, 0.4);
+  font-size: 12.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* --- cuộn phim --- */
+.film {
+  position: relative;
+  flex: 0 0 74px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #14161a;
+}
+
+/* mờ dần hai đầu cho giống phim chạy vô tận */
+.film::before,
+.film::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 46px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.film::before { top: 0; background: linear-gradient(var(--paper), rgba(251, 250, 246, 0)); }
+.film::after { bottom: 0; background: linear-gradient(rgba(251, 250, 246, 0), var(--paper)); }
+
+.film__track {
+  display: flex;
+  flex-direction: column;
+  padding: 0 11px;
+  background-color: #14161a;
+  /* hai hàng lỗ răng cưa hai bên, trôi cùng với ảnh */
+  background-image:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.82) 0 7px, transparent 7px 19px),
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.82) 0 7px, transparent 7px 19px);
+  background-size: 4px 100%, 4px 100%;
+  background-position: 4px 0, calc(100% - 4px) 0;
+  background-repeat: repeat-y;
+  animation: film-roll 44s linear infinite;
+  will-change: transform;
+}
+
+.film__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  margin-bottom: 9px;          /* mọi khung đều có khoảng hở -> chạy vòng lặp mượt */
+  overflow: hidden;
+  border-radius: 2px;
+  background: linear-gradient(160deg, #2b3038, #1b1f26);
+}
+
+.film__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* khung chưa có ảnh */
+.film__frame.is-empty::after {
+  content: attr(data-label);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
 /* ---------- 6. Chuyển động ---------- */
 @keyframes draw-circle {
   to { stroke-dashoffset: 0; }
@@ -518,6 +667,12 @@ body.is-locked { overflow: hidden; height: 100svh; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* cuộn phim trôi lên: track chứa 2 bản giống hệt nhau -> chạy -50% là khớp vòng */
+@keyframes film-roll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+
 /* ---------- 7. Giảm chuyển động ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -529,4 +684,5 @@ body.is-locked { overflow: hidden; height: 100svh; }
   .gate__circle path { stroke-dashoffset: 0; }
   .gate__hint { opacity: 1; }
   .q { display: none; }
+  .film__track { animation: none !important; }
 }
