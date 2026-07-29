@@ -18,8 +18,8 @@ const CONFIG = {
   hourTo: 12,
   minuteStep: 5,
 
-  /* Xem thiệp bao lâu thì tự trôi xuống phần quiz (mili giây) */
-  autoScrollDelay: 5000,
+  /* Xem thiệp bao lâu thì tab xác nhận tự trượt lên (mili giây) */
+  sheetDelay: 5000,
 };
 
 const STORAGE_KEY = 'rsvp:tran-minh-quang';
@@ -58,7 +58,7 @@ function spawnQuestionMarks(layer, count = 16) {
 }
 
 /* --------------------------------------------------------------------------
-   2. Mở thiệp: ẩn màn cổng -> hiện trang cuộn
+   2. Mở thiệp: ẩn màn cổng -> hiện tấm save the date
    -------------------------------------------------------------------------- */
 function openInvite(gate, invite, btn) {
   if (!gate || gate.hidden) return;
@@ -73,34 +73,63 @@ function openInvite(gate, invite, btn) {
     document.body.classList.remove('is-locked');
     window.scrollTo(0, 0);
     invite.focus({ preventScroll: true });
-    scheduleAutoScroll($('#quiz'));
+
+    // ngắm thiệp một lát rồi tab xác nhận tự trượt lên
+    setTimeout(() => {
+      if (sheet.answered) sheet.fab.hidden = false;   // trả lời rồi thì khỏi làm phiền
+      else openSheet();
+    }, CONFIG.sheetDelay);
   };
 
   if (reduceMotion) reveal();
   else setTimeout(reveal, 550);   // khớp với transition của .gate
 }
 
-/** Ngắm thiệp ~5 giây rồi tự trôi xuống phần quiz.
-    Nếu khách tự cuộn/chạm trước thì thôi, để họ tự đi. */
-function scheduleAutoScroll(target) {
-  if (!target) return;
+/* --------------------------------------------------------------------------
+   3. Tab xác nhận tham dự: trượt lên / đóng xuống
+   -------------------------------------------------------------------------- */
+const sheet = { el: null, panel: null, fab: null, isOpen: false, answered: false };
 
-  let cancelled = false;
-  const events = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
-  const cancel = () => { cancelled = true; off(); };
-  const off = () => events.forEach((ev) => window.removeEventListener(ev, cancel));
+function setupSheet() {
+  sheet.el = $('#sheet');
+  sheet.panel = $('#sheetPanel');
+  sheet.fab = $('#fabOpen');
+  if (!sheet.el) return;
 
-  events.forEach((ev) => window.addEventListener(ev, cancel, { passive: true }));
+  sheet.el.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeSheet));
+  sheet.fab?.addEventListener('click', openSheet);
 
-  setTimeout(() => {
-    off();
-    if (cancelled) return;
-    target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-  }, CONFIG.autoScrollDelay);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sheet.isOpen) closeSheet();
+  });
+}
+
+function openSheet() {
+  if (!sheet.el || sheet.isOpen) return;
+
+  sheet.isOpen = true;
+  sheet.fab.hidden = true;
+  sheet.el.hidden = false;
+  document.body.classList.add('sheet-open');
+
+  // 2 khung hình: khung đầu để trình duyệt kịp tính vị trí ban đầu, khung sau mới trượt lên
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.el.classList.add('is-open')));
+  setTimeout(() => sheet.panel.focus({ preventScroll: true }), 80);
+}
+
+function closeSheet() {
+  if (!sheet.el || !sheet.isOpen) return;
+
+  sheet.isOpen = false;
+  sheet.el.classList.remove('is-open');
+  document.body.classList.remove('sheet-open');
+  sheet.fab.hidden = false;
+
+  setTimeout(() => { if (!sheet.isOpen) sheet.el.hidden = true; }, reduceMotion ? 0 : 500);
 }
 
 /* --------------------------------------------------------------------------
-   3. Quiz: chọn giờ
+   4. Quiz: chọn giờ
    -------------------------------------------------------------------------- */
 const pad2 = (n) => String(n).padStart(2, '0');
 
@@ -131,7 +160,7 @@ function fillMinutes(select, hour, keep) {
 }
 
 /* --------------------------------------------------------------------------
-   4. Quiz: gửi câu trả lời lên Google Sheet
+   5. Quiz: gửi câu trả lời lên Google Sheet
    -------------------------------------------------------------------------- */
 async function sendAnswer(payload) {
   const url = CONFIG.rsvpEndpoint;
@@ -166,7 +195,7 @@ async function sendAnswer(payload) {
 }
 
 /* --------------------------------------------------------------------------
-   5. Quiz: nối mọi thứ lại
+   6. Quiz: nối mọi thứ lại
    -------------------------------------------------------------------------- */
 function setupQuiz() {
   const form = $('#rsvpForm');
@@ -215,6 +244,9 @@ function setupQuiz() {
     intro.hidden = true;
     form.hidden = true;
     done.hidden = false;
+
+    sheet.answered = true;
+    if (sheet.fab) sheet.fab.textContent = 'Câu trả lời của bạn';
   }
 
   function showForm(answer) {
@@ -284,7 +316,7 @@ function setupQuiz() {
 }
 
 /* --------------------------------------------------------------------------
-   6. Khởi động
+   7. Khởi động
    -------------------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
   const gate = $('#gate');
@@ -292,6 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = $('#openBtn');
 
   spawnQuestionMarks($('#questions'));
+  setupSheet();
   setupQuiz();
 
   btn?.addEventListener('click', () => openInvite(gate, invite, btn));

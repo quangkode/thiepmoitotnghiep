@@ -69,88 +69,6 @@
           src="/assets/images/invite.jpg"
           alt="Save the date — Trần Minh Quang's Grad Party. Chủ nhật, ngày 2 tháng 8 năm 2026. Hội trường Nguyễn Văn Đạo, Đại học Quốc gia Hà Nội, 144 Xuân Thủy, Cầu Giấy, Hà Nội."
           width="1080" height="1919" />
-
-        <a class="scroll-cue" href="#quiz">
-          <span class="scroll-cue__text">Cuộn xuống</span>
-          <span class="scroll-cue__arrow" aria-hidden="true"></span>
-        </a>
-      </section>
-
-      <!-- --- 2b. Quiz / xác nhận tham dự --- -->
-      <section class="quiz" id="quiz">
-        <div class="quiz__grid" aria-hidden="true"></div>
-
-        <div class="quiz__inner">
-          <div class="quiz__intro" id="quizIntro">
-            <p class="quiz__eyebrow">Chỉ một chút thôi</p>
-            <h2 class="quiz__thanks">Cảm ơn bạn<br />đã đọc tới đây</h2>
-            <p class="quiz__lead">
-              Ngày hôm đó sẽ vui hơn rất nhiều nếu có bạn ở đó.
-              Trả lời giúp mình vài câu nhé!
-            </p>
-          </div>
-
-          <form class="quiz__form" id="rsvpForm" novalidate>
-
-            <!-- Câu 1: tên -->
-            <div class="field">
-              <label class="field__label" for="guestName">
-                <span class="field__num">1</span> Bạn là ai?
-              </label>
-              <input
-                class="field__input"
-                id="guestName" name="name" type="text"
-                placeholder="Tên của bạn"
-                autocomplete="name" maxlength="60" required />
-              <p class="field__error" id="nameError" hidden>Cho mình xin cái tên với nhé!</p>
-            </div>
-
-            <!-- Câu 2: có đến không -->
-            <fieldset class="field">
-              <legend class="field__label">
-                <span class="field__num">2</span> Bạn có đến dự lễ tốt nghiệp của mình không?
-              </legend>
-
-              <div class="choices">
-                <label class="choice">
-                  <input type="radio" name="attend" value="co" required />
-                  <span class="choice__tick" aria-hidden="true"></span>
-                  <span class="choice__text">Có, mình sẽ đến</span>
-                </label>
-
-                <label class="choice">
-                  <input type="radio" name="attend" value="khong" />
-                  <span class="choice__tick" aria-hidden="true"></span>
-                  <span class="choice__text">Tiếc quá, mình bận mất rồi</span>
-                </label>
-              </div>
-              <p class="field__error" id="attendError" hidden>Chọn giúp mình một ô nhé!</p>
-            </fieldset>
-
-            <!-- Câu 3: mấy giờ đến (chỉ hiện khi chọn "Có") -->
-            <div class="field field--time" id="timeField" hidden>
-              <label class="field__label" for="hour">
-                <span class="field__num">3</span> Bạn đến được lúc mấy giờ?
-              </label>
-              <div class="time">
-                <select class="time__select" id="hour" name="hour" aria-label="Giờ"></select>
-                <span class="time__colon">:</span>
-                <select class="time__select" id="minute" name="minute" aria-label="Phút"></select>
-              </div>
-            </div>
-
-            <button class="btn" type="submit" id="submitBtn">Gửi câu trả lời</button>
-            <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
-          </form>
-
-          <!-- Màn hình sau khi gửi xong -->
-          <div class="quiz__done" id="quizDone" hidden>
-            <p class="quiz__done-mark" aria-hidden="true">✓</p>
-            <h2 class="quiz__thanks" id="doneTitle">Nhận được rồi nhé!</h2>
-            <p class="quiz__lead" id="doneLead"></p>
-            <button class="btn btn--ghost" type="button" id="editBtn">Sửa câu trả lời</button>
-          </div>
-        </div>
       </section>
 
       <!-- ===== CÁC PHẦN TIẾP THEO DỰNG Ở ĐÂY ===== -->
@@ -158,6 +76,99 @@
     </div>
 
   </div>
+
+  <!-- ================================================================
+       TAB XÁC NHẬN THAM DỰ — trượt lên đè lên thiệp sau ~5 giây
+       ================================================================ -->
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet__backdrop" data-close></div>
+
+    <div class="sheet__panel" id="sheetPanel" role="dialog" aria-modal="true"
+         aria-labelledby="sheetTitle" tabindex="-1">
+      <div class="quiz__grid" aria-hidden="true"></div>
+
+      <span class="sheet__handle" aria-hidden="true"></span>
+      <button class="sheet__close" type="button" data-close aria-label="Đóng">×</button>
+
+      <div class="quiz__inner">
+        <div class="quiz__intro" id="quizIntro">
+          <p class="quiz__eyebrow">Chỉ một chút thôi</p>
+          <h2 class="quiz__thanks" id="sheetTitle">Cảm ơn bạn<br />đã đọc tới đây</h2>
+          <p class="quiz__lead">
+            Ngày hôm đó sẽ vui hơn rất nhiều nếu có bạn ở đó.
+            Trả lời giúp mình vài câu nhé!
+          </p>
+        </div>
+
+        <form class="quiz__form" id="rsvpForm" novalidate>
+
+          <!-- Câu 1: tên -->
+          <div class="field">
+            <label class="field__label" for="guestName">
+              <span class="field__num">1</span> Bạn là ai?
+            </label>
+            <input
+              class="field__input"
+              id="guestName" name="name" type="text"
+              placeholder="Tên của bạn"
+              autocomplete="name" maxlength="60" required />
+            <p class="field__error" id="nameError" hidden>Cho mình xin cái tên với nhé!</p>
+          </div>
+
+          <!-- Câu 2: có đến không -->
+          <fieldset class="field">
+            <legend class="field__label">
+              <span class="field__num">2</span> Bạn có đến dự lễ tốt nghiệp của mình không?
+            </legend>
+
+            <div class="choices">
+              <label class="choice">
+                <input type="radio" name="attend" value="co" required />
+                <span class="choice__tick" aria-hidden="true"></span>
+                <span class="choice__text">Có, mình sẽ đến</span>
+              </label>
+
+              <label class="choice">
+                <input type="radio" name="attend" value="khong" />
+                <span class="choice__tick" aria-hidden="true"></span>
+                <span class="choice__text">Tiếc quá, mình bận mất rồi</span>
+              </label>
+            </div>
+            <p class="field__error" id="attendError" hidden>Chọn giúp mình một ô nhé!</p>
+          </fieldset>
+
+          <!-- Câu 3: mấy giờ đến (chỉ hiện khi chọn "Có") -->
+          <div class="field field--time" id="timeField" hidden>
+            <label class="field__label" for="hour">
+              <span class="field__num">3</span> Bạn đến được lúc mấy giờ?
+            </label>
+            <div class="time">
+              <select class="time__select" id="hour" name="hour" aria-label="Giờ"></select>
+              <span class="time__colon">:</span>
+              <select class="time__select" id="minute" name="minute" aria-label="Phút"></select>
+            </div>
+          </div>
+
+          <button class="btn" type="submit" id="submitBtn">Gửi câu trả lời</button>
+          <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+        </form>
+
+        <!-- Màn hình sau khi gửi xong -->
+        <div class="quiz__done" id="quizDone" hidden>
+          <p class="quiz__done-mark" aria-hidden="true">✓</p>
+          <h2 class="quiz__thanks" id="doneTitle">Nhận được rồi nhé!</h2>
+          <p class="quiz__lead" id="doneLead"></p>
+          <div class="quiz__done-actions">
+            <button class="btn btn--ghost" type="button" id="editBtn">Sửa câu trả lời</button>
+            <button class="btn btn--plain" type="button" data-close>Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nút mở lại tab khi khách đã đóng -->
+  <button class="fab" type="button" id="fabOpen" hidden>Xác nhận tham dự</button>
 
   <script src="/js/main.js"></script>
 </body>

@@ -6,13 +6,23 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
 
 1. **Màn cổng** — tấm lịch "NGÀY GÌ VẬY", vòng tròn xanh vẽ dần quanh dòng chữ, chữ "ẤN VÀO ĐÂY" và các dấu chấm hỏi bay lên.
 2. **Thiệp** — ấn vào vòng tròn thì màn cổng mờ đi, hiện tấm "Save the date" ở dạng trang cuộn.
-3. **Quiz xác nhận tham dự** — ngắm thiệp ~5 giây là tự trôi xuống (khách tự cuộn trước thì thôi).
+3. **Tab xác nhận tham dự** — ngắm thiệp ~5 giây là tab trượt lên đè lên thiệp (không phải cuộn xuống).
    Gồm lời cảm ơn, "Bạn là ai?", tích **Có / Không**; tích Có mới hiện phần chọn giờ đến (8h–12h, mỗi 5 phút).
-   Gửi xong hiện màn cảm ơn; lần sau mở lại vẫn nhớ, muốn đổi thì bấm "Sửa câu trả lời".
+   Đóng tab thì có nút nổi để mở lại. Gửi xong hiện màn cảm ơn; lần sau mở lại vẫn nhớ,
+   không tự bật tab nữa, muốn đổi thì bấm "Sửa câu trả lời".
 
-> ⚠️ **Cần làm một lần**: quiz chỉ ghi được câu trả lời sau khi nối với Google Sheet —
-> xem [docs/huong-dan-google-sheet.md](docs/huong-dan-google-sheet.md) (~5 phút).
-> Chưa nối thì khách bấm gửi sẽ báo lỗi.
+## Khi quiz báo "Chưa gửi được…"
+
+Gần như luôn là do bản triển khai Apps Script để sai quyền. Kiểm tra: dán link `.../exec` vào trình duyệt.
+
+- Hiện `{"ok":true,...}` → đúng rồi.
+- Bị đá sang **trang đăng nhập Google** → sai quyền. Vào Apps Script →
+  **Triển khai → Quản lý bản triển khai** → bấm **bút chì** → **Ai có quyền truy cập** đổi thành
+  **Bất kỳ ai** (Anyone — *không* phải "Anyone with Google account") → **Triển khai**.
+  Link `.../exec` giữ nguyên, khỏi sửa code.
+
+Chọn "Bất kỳ ai" không có nghĩa là ai cũng xem được bảng tính — người ngoài chỉ gửi thêm dòng vào được,
+không đọc được dữ liệu đã có.
 
 Mẹo khi làm tiếp: vào `/#thiep` để mở thẳng thiệp, khỏi phải bấm lại mỗi lần tải trang.
 
@@ -31,8 +41,7 @@ Mẹo khi làm tiếp: vào `/#thiep` để mở thẳng thiệp, khỏi phải 
 │   ├── fonts/          # font tự host (nếu dùng)
 │   └── audio/          # nhạc nền (nếu dùng)
 ├── docs/
-│   ├── apps-script.gs              # code dán vào Google Sheet để nhận câu trả lời
-│   └── huong-dan-google-sheet.md   # hướng dẫn nối, từng bước
+│   └── apps-script.gs  # code dán vào Apps Script của Google Sheet để nhận câu trả lời
 ├── vercel.json         # cấu hình deploy
 └── .gitignore
 ```
@@ -78,4 +87,4 @@ Sửa object `CONFIG` ở đầu [js/main.js](js/main.js):
 | `venue`, `address` | Địa điểm, hiện lên ở màn cảm ơn sau khi khách gửi |
 | `rsvpEndpoint` | Link Google Apps Script nhận câu trả lời |
 | `hourFrom`, `hourTo`, `minuteStep` | Khung giờ cho khách chọn (đang là 8–12h, mỗi 5 phút) |
-| `autoScrollDelay` | Ngắm thiệp bao lâu thì tự trôi xuống quiz (đang là 5000 = 5 giây) |
+| `sheetDelay` | Ngắm thiệp bao lâu thì tab xác nhận trượt lên (đang là 5000 = 5 giây) |
