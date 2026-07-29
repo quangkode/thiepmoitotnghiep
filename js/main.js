@@ -10,7 +10,7 @@ const CONFIG = {
   address: '144 Xuân Thủy, Cầu Giấy, Hà Nội',
 
   /* Nơi nhận câu trả lời — dán link Google Apps Script (dạng .../exec) vào đây.
-     Cách lấy: xem docs/huong-dan-google-sheet.md */
+     Cách lấy: xem README.md và docs/apps-script.gs */
   rsvpEndpoint: 'https://script.google.com/macros/s/AKfycbwf12iQH9UoNMvTRDDgJoZ_R2FjPfVsHwSC9DMRksgtl-bH20A6oqpadhK3S4ciAkqA/exec',
 
   /* Khách chọn giờ đến trong khoảng này */
@@ -18,8 +18,8 @@ const CONFIG = {
   hourTo: 12,
   minuteStep: 5,
 
-  /* Xem thiệp bao lâu thì tab xác nhận tự trượt lên (mili giây) */
-  sheetDelay: 5000,
+  /* Xem thiệp bao lâu thì chuyển sang màn xác nhận (mili giây) */
+  quizDelay: 5000,
 };
 
 const STORAGE_KEY = 'rsvp:tran-minh-quang';
@@ -74,11 +74,8 @@ function openInvite(gate, invite, btn) {
     window.scrollTo(0, 0);
     invite.focus({ preventScroll: true });
 
-    // ngắm thiệp một lát rồi tab xác nhận tự trượt lên
-    setTimeout(() => {
-      if (sheet.answered) sheet.fab.hidden = false;   // trả lời rồi thì khỏi làm phiền
-      else openSheet();
-    }, CONFIG.sheetDelay);
+    // ngắm thiệp một lát rồi chuyển hẳn sang màn xác nhận
+    setTimeout(() => showQuiz(invite), CONFIG.quizDelay);
   };
 
   if (reduceMotion) reveal();
@@ -86,46 +83,24 @@ function openInvite(gate, invite, btn) {
 }
 
 /* --------------------------------------------------------------------------
-   3. Tab xác nhận tham dự: trượt lên / đóng xuống
+   3. Chuyển sang màn xác nhận tham dự (một chiều, không quay lại)
    -------------------------------------------------------------------------- */
-const sheet = { el: null, panel: null, fab: null, isOpen: false, answered: false };
+function showQuiz(invite) {
+  const quiz = $('#quiz');
+  if (!quiz || !quiz.hidden) return;
 
-function setupSheet() {
-  sheet.el = $('#sheet');
-  sheet.panel = $('#sheetPanel');
-  sheet.fab = $('#fabOpen');
-  if (!sheet.el) return;
+  invite.classList.add('is-out');
 
-  sheet.el.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeSheet));
-  sheet.fab?.addEventListener('click', openSheet);
+  const swap = () => {
+    invite.hidden = true;
+    quiz.hidden = false;
+    quiz.classList.add('is-in');
+    window.scrollTo(0, 0);
+    quiz.focus({ preventScroll: true });
+  };
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && sheet.isOpen) closeSheet();
-  });
-}
-
-function openSheet() {
-  if (!sheet.el || sheet.isOpen) return;
-
-  sheet.isOpen = true;
-  sheet.fab.hidden = true;
-  sheet.el.hidden = false;
-  document.body.classList.add('sheet-open');
-
-  // 2 khung hình: khung đầu để trình duyệt kịp tính vị trí ban đầu, khung sau mới trượt lên
-  requestAnimationFrame(() => requestAnimationFrame(() => sheet.el.classList.add('is-open')));
-  setTimeout(() => sheet.panel.focus({ preventScroll: true }), 80);
-}
-
-function closeSheet() {
-  if (!sheet.el || !sheet.isOpen) return;
-
-  sheet.isOpen = false;
-  sheet.el.classList.remove('is-open');
-  document.body.classList.remove('sheet-open');
-  sheet.fab.hidden = false;
-
-  setTimeout(() => { if (!sheet.isOpen) sheet.el.hidden = true; }, reduceMotion ? 0 : 500);
+  if (reduceMotion) swap();
+  else setTimeout(swap, 500);   // khớp với transition của .invite.is-out
 }
 
 /* --------------------------------------------------------------------------
@@ -168,7 +143,7 @@ async function sendAnswer(payload) {
   if (!url) {
     console.warn(
       '[RSVP] Chưa cấu hình CONFIG.rsvpEndpoint trong js/main.js.\n' +
-      'Xem hướng dẫn ở docs/huong-dan-google-sheet.md để lấy link Google Apps Script.'
+      'Xem README.md để lấy link Google Apps Script.'
     );
     throw new Error('chưa cấu hình nơi nhận');
   }
@@ -244,9 +219,6 @@ function setupQuiz() {
     intro.hidden = true;
     form.hidden = true;
     done.hidden = false;
-
-    sheet.answered = true;
-    if (sheet.fab) sheet.fab.textContent = 'Câu trả lời của bạn';
   }
 
   function showForm(answer) {
@@ -324,7 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = $('#openBtn');
 
   spawnQuestionMarks($('#questions'));
-  setupSheet();
   setupQuiz();
 
   btn?.addEventListener('click', () => openInvite(gate, invite, btn));

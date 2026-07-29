@@ -71,29 +71,18 @@
           width="1080" height="1919" />
       </section>
 
-      <!-- ===== CÁC PHẦN TIẾP THEO DỰNG Ở ĐÂY ===== -->
-
     </div>
 
-  </div>
-
-  <!-- ================================================================
-       TAB XÁC NHẬN THAM DỰ — trượt lên đè lên thiệp sau ~5 giây
-       ================================================================ -->
-  <div class="sheet" id="sheet" hidden>
-    <div class="sheet__backdrop" data-close></div>
-
-    <div class="sheet__panel" id="sheetPanel" role="dialog" aria-modal="true"
-         aria-labelledby="sheetTitle" tabindex="-1">
+    <!-- ================================================================
+         MÀN 3 — XÁC NHẬN THAM DỰ: thay hẳn màn thiệp sau ~5 giây
+         ================================================================ -->
+    <section class="quiz" id="quiz" tabindex="-1" hidden>
       <div class="quiz__grid" aria-hidden="true"></div>
-
-      <span class="sheet__handle" aria-hidden="true"></span>
-      <button class="sheet__close" type="button" data-close aria-label="Đóng">×</button>
 
       <div class="quiz__inner">
         <div class="quiz__intro" id="quizIntro">
           <p class="quiz__eyebrow">Chỉ một chút thôi</p>
-          <h2 class="quiz__thanks" id="sheetTitle">Cảm ơn bạn<br />đã đọc tới đây</h2>
+          <h2 class="quiz__thanks">Cảm ơn bạn<br />đã đọc tới đây</h2>
           <p class="quiz__lead">
             Ngày hôm đó sẽ vui hơn rất nhiều nếu có bạn ở đó.
             Trả lời giúp mình vài câu nhé!
@@ -160,15 +149,12 @@
           <p class="quiz__lead" id="doneLead"></p>
           <div class="quiz__done-actions">
             <button class="btn btn--ghost" type="button" id="editBtn">Sửa câu trả lời</button>
-            <button class="btn btn--plain" type="button" data-close>Đóng</button>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Nút mở lại tab khi khách đã đóng -->
-  <button class="fab" type="button" id="fabOpen" hidden>Xác nhận tham dự</button>
+  </div>
 
   <script src="/js/main.js"></script>
 </body>

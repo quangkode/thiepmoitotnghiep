@@ -6,10 +6,9 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
 
 1. **Màn cổng** — tấm lịch "NGÀY GÌ VẬY", vòng tròn xanh vẽ dần quanh dòng chữ, chữ "ẤN VÀO ĐÂY" và các dấu chấm hỏi bay lên.
 2. **Thiệp** — ấn vào vòng tròn thì màn cổng mờ đi, hiện tấm "Save the date" ở dạng trang cuộn.
-3. **Tab xác nhận tham dự** — ngắm thiệp ~5 giây là tab trượt lên đè lên thiệp (không phải cuộn xuống).
+3. **Màn xác nhận tham dự** — ngắm thiệp ~5 giây là **chuyển hẳn sang màn này**, một chiều, không quay lại.
    Gồm lời cảm ơn, "Bạn là ai?", tích **Có / Không**; tích Có mới hiện phần chọn giờ đến (8h–12h, mỗi 5 phút).
-   Đóng tab thì có nút nổi để mở lại. Gửi xong hiện màn cảm ơn; lần sau mở lại vẫn nhớ,
-   không tự bật tab nữa, muốn đổi thì bấm "Sửa câu trả lời".
+   Gửi xong hiện màn cảm ơn; lần sau mở lại vẫn nhớ, muốn đổi thì bấm "Sửa câu trả lời".
 
 ## Khi quiz báo "Chưa gửi được…"
 
@@ -87,4 +86,4 @@ Sửa object `CONFIG` ở đầu [js/main.js](js/main.js):
 | `venue`, `address` | Địa điểm, hiện lên ở màn cảm ơn sau khi khách gửi |
 | `rsvpEndpoint` | Link Google Apps Script nhận câu trả lời |
 | `hourFrom`, `hourTo`, `minuteStep` | Khung giờ cho khách chọn (đang là 8–12h, mỗi 5 phút) |
-| `sheetDelay` | Ngắm thiệp bao lâu thì tab xác nhận trượt lên (đang là 5000 = 5 giây) |
+| `quizDelay` | Ngắm thiệp bao lâu thì chuyển sang màn xác nhận (đang là 5000 = 5 giây) |
