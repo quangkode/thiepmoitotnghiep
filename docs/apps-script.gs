@@ -1,7 +1,19 @@
 /**
- * NƠI NHẬN CÂU TRẢ LỜI CỦA KHÁCH — dán toàn bộ file này vào Apps Script
- * của một Google Sheet. Hướng dẫn từng bước: docs/huong-dan-google-sheet.md
+ * NƠI NHẬN CÂU TRẢ LỜI CỦA KHÁCH
+ *
+ * Dán TOÀN BỘ file này vào Apps Script, thay cho MỌI thứ đang có sẵn.
+ * Xoá luôn cả dòng `function myFunction() {` và dấu `}` cuối của nó —
+ * code dưới đây phải nằm ở ngoài cùng, không được lồng trong hàm nào,
+ * nếu không web app sẽ không tìm thấy doPost.
  */
+
+/** ID bảng tính nhận câu trả lời.
+ *  - Mở Apps Script từ chính Google Sheet (Tiện ích mở rộng → Apps Script) thì để trống ''.
+ *  - Dự án Apps Script riêng (mở từ script.google.com) thì BẮT BUỘC điền.
+ *  Lấy ID trong link của Sheet:
+ *  docs.google.com/spreadsheets/d/  ID_NẰM_Ở_ĐÂY  /edit
+ */
+const SHEET_ID = '';
 
 /** Tên trang tính chứa câu trả lời (tự tạo nếu chưa có). */
 const SHEET_NAME = 'Trả lời';
@@ -40,6 +52,16 @@ function doGet() {
   return json_({ ok: true, message: 'RSVP endpoint đang chạy' });
 }
 
+/**
+ * Bấm Chạy hàm này một lần để kiểm tra trước khi triển khai.
+ * Xem kết quả ở Nhật ký thực thi. Nó ghi một dòng thử vào bảng, nhớ xoá dòng đó đi.
+ */
+function kiemTra() {
+  const sheet = getSheet_();
+  sheet.appendRow([new Date(), 'Thử kết nối', 'Có', '08:00', 'kiemTra()']);
+  Logger.log('OK — đã ghi vào bảng tính: ' + sheet.getParent().getName() + ' / ' + sheet.getName());
+}
+
 /* -------------------------------------------------------------------------- */
 
 /** Trang web gửi JSON, bản dự phòng gửi dạng form -> nhận cả hai. */
@@ -55,7 +77,17 @@ function readPayload_(e) {
 }
 
 function getSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SHEET_ID
+    ? SpreadsheetApp.openById(SHEET_ID)
+    : SpreadsheetApp.getActiveSpreadsheet();
+
+  if (!ss) {
+    throw new Error(
+      'Không tìm thấy bảng tính. Dự án Apps Script này không gắn với Sheet nào — ' +
+      'điền ID bảng tính vào SHEET_ID ở đầu file.'
+    );
+  }
+
   let sheet = ss.getSheetByName(SHEET_NAME);
 
   if (!sheet) {
