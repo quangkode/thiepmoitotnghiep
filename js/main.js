@@ -11,7 +11,7 @@ const CONFIG = {
 
   /* Nơi nhận câu trả lời — dán link Google Apps Script (dạng .../exec) vào đây.
      Cách lấy: xem docs/huong-dan-google-sheet.md */
-  rsvpEndpoint: '',
+  rsvpEndpoint: 'https://script.google.com/macros/s/AKfycbwf12iQH9UoNMvTRDDgJoZ_R2FjPfVsHwSC9DMRksgtl-bH20A6oqpadhK3S4ciAkqA/exec',
 
   /* Khách chọn giờ đến trong khoảng này */
   hourFrom: 8,
