@@ -1,0 +1,270 @@
+/* ==========================================================================
+   THIỆP MỜI TỐT NGHIỆP — TRẦN MINH QUANG
+   Portrait-first: toàn bộ thiệp là một khung dọc, tối ưu cho điện thoại.
+   ========================================================================== */
+
+/* ---------- 1. Biến dùng chung ---------- */
+:root {
+  --paper: #fbfaf6;              /* trùng nền của 2 tấm ảnh */
+  --backdrop: #e7e5df;           /* nền ngoài khung, chỉ thấy trên desktop */
+  --ink: #111111;
+  --blue: #1360d8;               /* xanh nước biển */
+
+  --frame-max-width: 480px;
+  --screen-h: 100svh;
+  --pad-x: 24px;
+
+  /* tỉ lệ 2 tấm ảnh: 1080 / 1919 */
+  --img-ratio: 0.5628;
+}
+
+/* ---------- 2. Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, h1, h2, h3, h4, p, figure, blockquote, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+img, svg, video { display: block; max-width: 100%; }
+button, input, textarea, select { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+[hidden] { display: none !important; }
+
+/* ---------- 3. Nền & khung dọc ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100svh;
+  background: var(--backdrop);
+  color: var(--ink);
+  font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Khoá cuộn khi đang ở màn cổng */
+body.is-locked { overflow: hidden; height: 100svh; }
+
+#app {
+  position: relative;
+  width: 100%;
+  max-width: var(--frame-max-width);
+  min-height: 100svh;
+  margin-inline: auto;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+/* ---------- 4. Màn 1: cổng ---------- */
+.gate {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+/* Khung ôm sát tấm ảnh -> mọi toạ độ % bên trong đều bám theo ảnh.
+   Rộng = nhỏ hơn giữa (bề ngang khung thiệp) và (bề ngang suy ra từ chiều cao màn hình),
+   nên ảnh luôn lọt trọn vẹn, không bị cắt mép. */
+.gate__frame {
+  position: relative;
+  width: 100%;                                              /* dự phòng cho trình duyệt cũ */
+  width: min(100%, calc(100vh * var(--img-ratio)));
+  width: min(100%, calc(100svh * var(--img-ratio)));
+  aspect-ratio: 1080 / 1919;
+  line-height: 0;
+}
+
+.gate__img {
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* --- 4a. Vòng tròn xanh quanh chữ "NGÀY GÌ VẬY" --- */
+.gate__hotspot {
+  position: absolute;
+  left: 52.3%;
+  top: 50.6%;
+  width: 46%;
+  height: 8.6%;
+  transform: translate(-50%, -50%) rotate(-2.2deg);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  animation: tap-pulse 2.4s ease-in-out 1.6s infinite;
+}
+
+.gate__hotspot::before {           /* vùng chạm rộng hơn vòng tròn cho dễ bấm */
+  content: "";
+  position: absolute;
+  inset: -22% -8%;
+}
+
+.gate__circle {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.gate__circle path {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-circle 1.5s cubic-bezier(0.65, 0, 0.35, 1) 0.35s forwards;
+}
+
+/* Vòng sáng lan ra, nhắc người xem bấm */
+.gate__hotspot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--blue);
+  border-radius: 50%;
+  opacity: 0;
+  animation: ripple 2.4s ease-out 1.9s infinite;
+}
+
+.gate__hint {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.9em);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  white-space: nowrap;
+  font-size: clamp(12px, 3.4vw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--blue);
+  opacity: 0;
+  animation: hint-in 0.6s ease 1.7s forwards;
+}
+
+.gate__hint-arrow {
+  width: 0;
+  height: 0;
+  border-left: 0.32em solid transparent;
+  border-right: 0.32em solid transparent;
+  border-bottom: 0.42em solid var(--blue);
+  animation: nudge 1.6s ease-in-out infinite;
+}
+
+.gate__hotspot:focus-visible { outline: 3px solid var(--blue); outline-offset: 12px; border-radius: 999px; }
+.gate__hotspot:active { transform: translate(-50%, -50%) rotate(-2.2deg) scale(0.96); }
+
+/* --- 4b. Dấu chấm hỏi bay bay --- */
+.gate__questions {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.q {
+  position: absolute;
+  top: 100%;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--blue);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: q-rise var(--dur, 10s) linear var(--delay, 0s) infinite;
+}
+
+/* --- 4c. Lúc mở thiệp --- */
+.gate.is-open {
+  opacity: 0;
+  transform: scale(1.05);
+  pointer-events: none;
+}
+
+/* ---------- 5. Màn 2+: thiệp cuộn ---------- */
+.invite { background: var(--paper); }
+
+.invite.is-in { animation: fade-up 0.8s ease both; }
+
+.invite__hero img {
+  width: 100%;
+  height: auto;
+}
+
+/* Khung màn hình dùng cho các phần thêm sau */
+.screen {
+  position: relative;
+  min-height: var(--screen-h);
+  padding: 56px var(--pad-x) calc(56px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* ---------- 6. Chuyển động ---------- */
+@keyframes draw-circle {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes tap-pulse {
+  0%, 100% { transform: translate(-50%, -50%) rotate(-2.2deg) scale(1); }
+  50%      { transform: translate(-50%, -50%) rotate(-2.2deg) scale(1.045); }
+}
+
+@keyframes ripple {
+  0%   { opacity: 0.55; transform: scale(1); }
+  70%  { opacity: 0; transform: scale(1.35); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+@keyframes hint-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes nudge {
+  0%, 100% { transform: translateY(2px); }
+  50%      { transform: translateY(-2px); }
+}
+
+@keyframes q-rise {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
+  12%  { opacity: var(--op, 0.35); }
+  85%  { opacity: var(--op, 0.35); }
+  100% { opacity: 0; transform: translate3d(var(--drift, 20px), -118svh, 0) rotate(var(--spin, 20deg)); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- 7. Giảm chuyển động ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .gate__circle path { stroke-dashoffset: 0; }
+  .gate__hint { opacity: 1; }
+  .q { display: none; }
+}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#fbfaf6" />
+
+  <title>Thư mời lễ tốt nghiệp — Trần Minh Quang</title>
+  <meta name="description" content="Thư mời tham dự lễ tốt nghiệp của Trần Minh Quang — Chủ nhật, 02/08/2026." />
+
+  <!-- Open Graph: hiển thị khi chia sẻ qua Zalo / Messenger / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Ngày gì vậy?" />
+  <meta property="og:description" content="Save the date — 02/08/2026." />
+  <meta property="og:image" content="/assets/images/gate.jpg" />
+
+  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" as="image" href="/assets/images/gate.jpg" />
+  <link rel="preload" as="image" href="/assets/images/invite.jpg" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="is-locked">
+
+  <div id="app">
+
+    <!-- ================================================================
+         MÀN 1 — CỔNG: tấm lịch "NGÀY GÌ VẬY", ấn vào vòng tròn để mở
+         ================================================================ -->
+    <section class="gate" id="gate">
+      <div class="gate__frame">
+        <img
+          class="gate__img"
+          src="/assets/images/gate.jpg"
+          alt="Tấm lịch tháng 8 với dòng chữ: Ngày gì vậy"
+          width="1080" height="1919"
+          fetchpriority="high" />
+
+        <!-- dấu chấm hỏi bay bay (tạo bằng JS) -->
+        <div class="gate__questions" id="questions" aria-hidden="true"></div>
+
+        <!-- vòng tròn xanh bao quanh chữ "NGÀY GÌ VẬY" -->
+        <button type="button" class="gate__hotspot" id="openBtn" aria-label="Ấn để mở thiệp mời">
+          <svg class="gate__circle" viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true">
+            <path
+              pathLength="1"
+              d="M150 7 C 66 7, 7 25, 7 50 C 7 76, 68 95, 152 95 C 236 95, 293 76, 293 48 C 293 22, 232 7, 148 7 C 112 7, 80 13, 58 23" />
+          </svg>
+          <span class="gate__hint">
+            <span class="gate__hint-arrow" aria-hidden="true"></span>
+            Ấn vào đây
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         MÀN 2 — THIỆP (trang cuộn). Các phần tiếp theo thêm sau.
+         ================================================================ -->
+    <div class="invite" id="invite" tabindex="-1" hidden>
+
+      <section class="invite__hero">
+        <img
+          src="/assets/images/invite.jpg"
+          alt="Save the date — Trần Minh Quang's Grad Party. Chủ nhật, ngày 2 tháng 8 năm 2026. Hội trường Nguyễn Văn Đạo, Đại học Quốc gia Hà Nội, 144 Xuân Thủy, Cầu Giấy, Hà Nội."
+          width="1080" height="1919" />
+      </section>
+
+      <!-- ===== CÁC PHẦN TIẾP THEO DỰNG Ở ĐÂY =====
+      <section class="screen"> ... </section>
+      ========================================== -->
+
+    </div>
+
+  </div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
