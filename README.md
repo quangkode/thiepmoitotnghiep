@@ -5,7 +5,14 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
 ## Đang có gì
 
 1. **Màn cổng** — tấm lịch "NGÀY GÌ VẬY", vòng tròn xanh vẽ dần quanh dòng chữ, chữ "ẤN VÀO ĐÂY" và các dấu chấm hỏi bay lên.
-2. **Thiệp** — ấn vào vòng tròn thì màn cổng mờ đi, hiện tấm "Save the date" ở dạng trang cuộn. Các phần bên dưới sẽ thêm sau.
+2. **Thiệp** — ấn vào vòng tròn thì màn cổng mờ đi, hiện tấm "Save the date" ở dạng trang cuộn.
+3. **Quiz xác nhận tham dự** — ngắm thiệp ~5 giây là tự trôi xuống (khách tự cuộn trước thì thôi).
+   Gồm lời cảm ơn, "Bạn là ai?", tích **Có / Không**; tích Có mới hiện phần chọn giờ đến (8h–12h, mỗi 5 phút).
+   Gửi xong hiện màn cảm ơn; lần sau mở lại vẫn nhớ, muốn đổi thì bấm "Sửa câu trả lời".
+
+> ⚠️ **Cần làm một lần**: quiz chỉ ghi được câu trả lời sau khi nối với Google Sheet —
+> xem [docs/huong-dan-google-sheet.md](docs/huong-dan-google-sheet.md) (~5 phút).
+> Chưa nối thì khách bấm gửi sẽ báo lỗi.
 
 Mẹo khi làm tiếp: vào `/#thiep` để mở thẳng thiệp, khỏi phải bấm lại mỗi lần tải trang.
 
@@ -23,6 +30,9 @@ Mẹo khi làm tiếp: vào `/#thiep` để mở thẳng thiệp, khỏi phải 
 │   │   └── favicon.svg
 │   ├── fonts/          # font tự host (nếu dùng)
 │   └── audio/          # nhạc nền (nếu dùng)
+├── docs/
+│   ├── apps-script.gs              # code dán vào Google Sheet để nhận câu trả lời
+│   └── huong-dan-google-sheet.md   # hướng dẫn nối, từng bước
 ├── vercel.json         # cấu hình deploy
 └── .gitignore
 ```
@@ -60,5 +70,12 @@ vercel --prod   # deploy bản chính thức
 
 ## Sửa thông tin sự kiện
 
-Sửa object `CONFIG` ở đầu [js/main.js](js/main.js) — tên, ngày giờ, địa điểm.
-Giờ bắt đầu hiện đang để tạm `00:00` ngày 02/08/2026, cần xác nhận lại.
+Sửa object `CONFIG` ở đầu [js/main.js](js/main.js):
+
+| Khoá | Ý nghĩa |
+| --- | --- |
+| `startsAt` | Ngày giờ diễn ra (đang để `02/08/2026 08:00`, cần xác nhận lại) |
+| `venue`, `address` | Địa điểm, hiện lên ở màn cảm ơn sau khi khách gửi |
+| `rsvpEndpoint` | Link Google Apps Script nhận câu trả lời |
+| `hourFrom`, `hourTo`, `minuteStep` | Khung giờ cho khách chọn (đang là 8–12h, mỗi 5 phút) |
+| `autoScrollDelay` | Ngắm thiệp bao lâu thì tự trôi xuống quiz (đang là 5000 = 5 giây) |
