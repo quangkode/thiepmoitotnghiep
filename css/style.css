@@ -683,7 +683,42 @@ body.is-locked { overflow: hidden; height: 100svh; }
 .wish.is-in { animation: fade-up 0.6s ease both; }
 .wish:focus { outline: none; }
 
-.wish__view { position: relative; }
+/* nội dung luôn nằm trên lớp ảnh trôi */
+.wish__view { position: relative; z-index: 1; }
+
+/* --- ảnh polaroid trôi ngang qua --- */
+.floaties {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: max(0px, calc(50% - var(--frame-max-width) / 2));
+  width: min(100%, var(--frame-max-width));
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;              /* không cản bấm vào con dấu bên dưới */
+}
+
+.floatie {
+  position: absolute;
+  top: var(--top, 40%);
+  left: 0;
+  width: var(--w, 120px);
+  padding: 6px 6px 18px;             /* viền trắng kiểu ảnh polaroid */
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 10px 22px rgba(17, 17, 17, 0.18);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: floatie-bay var(--dur, 20s) linear forwards;
+}
+
+/* để nguyên khung ảnh gốc — ảnh ngang ra ngang, ảnh dọc ra dọc, không cắt xén */
+.floatie img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #ece9e2;
+}
 
 .wish__eyebrow {
   font-size: 11px;
@@ -734,6 +769,12 @@ body.is-locked { overflow: hidden; height: 100svh; }
   grid-template-columns: repeat(3, 1fr);
   gap: 22px 8px;
   margin-top: 26px;
+}
+
+/* con dấu đóng xuống lần lượt, cái nọ tiếp cái kia */
+.stamp {
+  animation: stamp-dong 0.42s cubic-bezier(0.2, 1.5, 0.5, 1) both;
+  animation-delay: calc(var(--i, 0) * 65ms);
 }
 
 .stamp__btn {
@@ -792,6 +833,8 @@ body.is-locked { overflow: hidden; height: 100svh; }
 .stamp__btn:focus-visible .stamp__seal { outline: 2px solid var(--blue); outline-offset: 3px; }
 
 /* ---------- 5g. Trang lời chúc của một người ---------- */
+.note { animation: fade-up 0.45s ease both; }
+
 .note__head {
   display: flex;
   align-items: center;
@@ -1154,7 +1197,43 @@ body.is-locked { overflow: hidden; height: 100svh; }
 .menu.is-open .menu__eyes i { height: 2.5px; animation: none; }
 .menu.is-open .menu__smile { transform: scale(1.15); }
 
+/* ==========================================================================
+   5j. PHÁO GIẤY — bắn một trận lúc gửi câu trả lời và lúc gửi lời chúc
+   ========================================================================== */
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti i {
+  position: absolute;
+  top: -8%;
+  left: var(--x, 50%);
+  width: var(--w, 8px);
+  height: var(--h, 12px);
+  border-radius: 2px;
+  background: hsl(var(--hue, 212) 82% 62%);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: confetti-roi var(--dur, 2.4s) linear var(--delay, 0s) forwards;
+}
+
 /* ---------- 6. Chuyển động ---------- */
+@keyframes stamp-dong {
+  0%   { opacity: 0; transform: scale(1.55) rotate(-9deg); }
+  55%  { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes confetti-roi {
+  0%   { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
+  85%  { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--drift, 0px), 108vh, 0) rotate(var(--spin, 360deg)); }
+}
+
 @keyframes menu-bob {
   0%, 88%, 100% { transform: translateY(0); }
   92%           { transform: translateY(-5px); }
@@ -1164,6 +1243,14 @@ body.is-locked { overflow: hidden; height: 100svh; }
 @keyframes menu-blink {
   0%, 92%, 100% { transform: scaleY(1); }
   95%           { transform: scaleY(0.15); }
+}
+
+/* ảnh trôi từ mép này sang mép kia, vào ra thì mờ dần, nghiêng qua nghiêng lại */
+@keyframes floatie-bay {
+  0%   { opacity: 0; transform: translateX(var(--from)) rotate(var(--tilt, 6deg)); }
+  10%  { opacity: 0.9; }
+  90%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(var(--to)) rotate(calc(var(--tilt, 6deg) * -1)); }
 }
 
 @keyframes draw-circle {

@@ -18,11 +18,27 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
    dán sticker: bấm để dán rồi **kéo thả tự do**, có nút to hơn / nhỏ đi / quay / bỏ ra).
 6. **Nút menu tròn** — mặt cười nhỏ ở góc dưới phải, chỉ hiện từ màn thư trở đi.
    Chạm vào bung ra 3 trang: *Thiệp mời*, *Thư cảm ơn*, *Sổ lưu bút* — nhảy qua lại thoải mái.
+7. **Ảnh polaroid trôi ngang** ở trang chủ sổ lưu bút — lâu lâu thả một tấm, lúc sang trái lúc sang phải,
+   nằm dưới nội dung nên không che chữ. Chỉnh `floatGap` (giãn cách) và `floatMax` (số tấm cùng lúc)
+   trong [js/main.js](js/main.js); để `floatMax: 0` là tắt hẳn.
+
+## Ảnh trôi ngang ở sổ lưu bút
+
+Bỏ ảnh vào [assets/images/bay/](assets/images/bay/), đặt tên `1.jpg`, `2.jpg`, … `6.jpg`
+(muốn nhiều hơn thì thêm tên vào mảng `floatPhotos` trong [js/main.js](js/main.js)).
+
+- Ảnh ở đây **để nguyên khung, không bị cắt** — nên ảnh **ngang** là hợp nhất, khác với cuộn phim
+  (khung 3:4, ảnh ngang bị cắt hai bên).
+- Cỡ khoảng **900px chiều dài, dưới ~150KB** là dư đẹp vì mỗi tấm chỉ hiện rộng 112–168px.
+- Thư mục còn trống thì trang tự mượn tạm ảnh của cuộn phim, không lỗi và không để trống chỗ.
 
 > ⚠️ **Còn 1 việc: triển khai lại Apps Script.** `wishEndpoint` đã điền sẵn (cùng link `.../exec`
 > với quiz), nhưng bản Apps Script đang chạy trên Google là bản cũ — chưa biết nhận lời chúc.
-> Chưa làm 3 bước dưới thì lời chúc chỉ nằm trong máy người viết (trang tự nhận ra và
-> **không gửi gì lên**, nên không sợ ghi rác vào sheet *Trả lời*).
+>
+> Trong lúc chưa làm 3 bước dưới, trang **chỉ lưu lời chúc trong máy người viết và không gửi
+> gì lên** (nên không có dòng rác nào lọt vào sheet *Trả lời* của quiz). Trang chỉ gửi khi
+> đọc được phản hồi đúng dạng từ endpoint. Làm xong 3 bước, ai từng viết lời chúc mà mở lại
+> trang thì lời chúc kẹt trong máy họ **tự được gửi bù** lên Sheet, không phải viết lại.
 
 ### Nối sổ lưu bút với Google Sheet
 

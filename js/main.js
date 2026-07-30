@@ -47,9 +47,20 @@ const CONFIG = {
   /* Mỗi lời chúc dán được nhiều nhất mấy sticker */
   maxStickers: 5,
 
+  /* Ảnh polaroid trôi ngang qua trang sổ lưu bút.
+     Bỏ ảnh (nên là ảnh NGANG) vào assets/images/bay/ đúng tên dưới đây.
+     Ảnh để nguyên khung, không bị cắt như cuộn phim.
+     Thư mục còn trống thì tự lấy tạm ảnh của cuộn phim, không lỗi gì cả.
+     floatGap: cách nhau bao lâu thì thả một tấm (mili giây, ngẫu nhiên trong khoảng).
+     floatMax: nhiều nhất mấy tấm cùng trôi một lúc. Để floatMax: 0 là tắt hẳn. */
+  floatPhotos: ['1.jpg', '2.jpg', '3.jpg'],
+  floatDir: '/assets/images/bay/',
+  floatGap: [4500, 9500],
+  floatMax: 3,
+
   /* Tăng số này mỗi khi thay ảnh trong assets/images/ (sticker, cuộn phim, chữ ký).
      Ảnh được gắn thêm ?v=<số> nên trình duyệt buộc phải tải bản mới thay vì dùng bản cũ. */
-  assetVersion: 3,
+  assetVersion: 4,
 };
 
 /* ==========================================================================
@@ -219,6 +230,33 @@ function closeScreen(el) {
 }
 
 /* --------------------------------------------------------------------------
+   3a0. Pháo giấy — bắn lúc gửi câu trả lời và lúc gửi lời chúc
+   -------------------------------------------------------------------------- */
+function phaoGiay(soManh = 26) {
+  if (reduceMotion) return;
+
+  const lop = document.createElement('div');
+  lop.className = 'confetti';
+  lop.setAttribute('aria-hidden', 'true');
+
+  for (let i = 0; i < soManh; i++) {
+    const manh = document.createElement('i');
+    manh.style.setProperty('--x', rand(2, 98).toFixed(1) + '%');
+    manh.style.setProperty('--hue', Math.round(rand(0, 360)));
+    manh.style.setProperty('--delay', rand(0, 0.5).toFixed(2) + 's');
+    manh.style.setProperty('--dur', rand(1.9, 3.3).toFixed(2) + 's');
+    manh.style.setProperty('--drift', rand(-70, 70).toFixed(0) + 'px');
+    manh.style.setProperty('--spin', rand(200, 900).toFixed(0) + 'deg');
+    manh.style.setProperty('--w', rand(6, 11).toFixed(0) + 'px');
+    manh.style.setProperty('--h', rand(9, 16).toFixed(0) + 'px');
+    lop.appendChild(manh);
+  }
+
+  document.body.appendChild(lop);
+  setTimeout(() => lop.remove(), 4500);
+}
+
+/* --------------------------------------------------------------------------
    3a. Nút menu tròn: nhảy qua lại giữa các trang
    -------------------------------------------------------------------------- */
 const MENU_SCREENS = { invite: '#invite', letter: '#letter', wish: '#wish' };
@@ -240,6 +278,8 @@ function goToScreen(key) {
   if (key === 'wish') {
     showWishView('wishHome');
     refreshWishes();
+  } else {
+    stopFloaties();
   }
 }
 
@@ -508,8 +548,12 @@ async function sendWish(wish) {
   const all = [...readLocalWishes().filter((w) => w.id !== wish.id), wish];
   try { localStorage.setItem(WISH_KEY, JSON.stringify(all)); } catch (e) { /* bỏ qua */ }
 
-  // chưa cấu hình, hoặc script còn bản cũ -> chỉ giữ trong máy, không gửi lên
-  if (!CONFIG.wishEndpoint || wishEndpointReady === false) return;
+  /* CHỈ gửi khi đã chắc chắn endpoint biết nhận lời chúc.
+     Với Apps Script bản cũ, trình duyệt không đọc được phản hồi (CORS) nên ta không
+     tài nào phân biệt được "script cũ" hay "mạng lỗi" -> mặc định là KHÔNG gửi,
+     khỏi đẻ ra dòng rác trong sheet Trả lời của quiz. Lời chúc vẫn nằm trong máy và
+     sẽ được gửi bù ở syncLocalWishes() ngay khi endpoint chạy đúng. */
+  if (wishEndpointReady !== true) return;
   const payload = wishPayload(wish);
 
   try {
@@ -547,6 +591,10 @@ function showWishView(id) {
     if (el) el.hidden = v !== id;
   });
   window.scrollTo(0, 0);
+
+  // ảnh chỉ trôi ở trang chủ, lúc đang viết thì tắt cho đỡ rối mắt
+  if (id === 'wishHome') startFloaties();
+  else stopFloaties();
 }
 
 /** Màu mực mặc định suy ra từ tên -> mỗi người một màu, không cần lưu thêm. */
@@ -595,6 +643,7 @@ function renderStamps() {
   wishList.forEach((wish, i) => {
     const li = document.createElement('li');
     li.className = 'stamp';
+    li.style.setProperty('--i', Math.min(i, 12));   // đóng dấu lần lượt, nhiều quá thì thôi
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -614,6 +663,34 @@ function renderStamps() {
 }
 
 async function refreshWishes() {
+  // hiện ngay những gì có sẵn trong máy để trang không đứng chờ mạng
+  wishList = pickWishes(readLocalWishes());
+  renderStamps();
+
+  wishList = await loadWishes();
+  renderStamps();
+
+  syncLocalWishes();
+}
+
+/** Gửi bù lời chúc còn kẹt trong máy (lúc viết thì endpoint chưa nhận được). */
+async function syncLocalWishes() {
+  if (wishEndpointReady !== true) return;
+
+  const daCo = new Set(wishList.map((w) => w.id));
+  const ket = readLocalWishes().filter((w) => w.id && !daCo.has(w.id));
+  if (!ket.length) return;
+
+  for (const wish of ket) {
+    try {
+      await sendWish(wish);
+    } catch (err) {
+      console.warn('[WISH] gửi bù chưa được:', err);
+      return;
+    }
+  }
+
+  console.info('[WISH] đã gửi bù ' + ket.length + ' lời chúc lưu trong máy.');
   wishList = await loadWishes();
   renderStamps();
 }
@@ -969,8 +1046,15 @@ function setupWishForm() {
     nameInput.focus({ preventScroll: true });
   });
 
-  $('#wishBackBtn')?.addEventListener('click', () => showWishView('wishHome'));
-  $('#formBackBtn')?.addEventListener('click', () => showWishView('wishHome'));
+  // quay về trang chủ thì tải lại danh sách: thấy lời chúc mới của người khác,
+  // đồng thời là dịp gửi bù mấy lời chúc còn kẹt trong máy
+  const veTrangChu = () => {
+    showWishView('wishHome');
+    refreshWishes();
+  };
+
+  $('#wishBackBtn')?.addEventListener('click', veTrangChu);
+  $('#formBackBtn')?.addEventListener('click', veTrangChu);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1010,6 +1094,7 @@ function setupWishForm() {
       renderPad();
 
       showOneWish(wish);
+      phaoGiay(20);
     } catch (err) {
       status.className = 'form-status is-error';
       status.textContent = 'Chưa gửi được. Bạn thử lại giúp mình nhé!';
@@ -1018,6 +1103,82 @@ function setupWishForm() {
       submitBtn.disabled = false;
     }
   });
+}
+
+/* --------------------------------------------------------------------------
+   3f. Ảnh polaroid trôi ngang qua sổ lưu bút (chỉ để trang trí)
+   -------------------------------------------------------------------------- */
+const rand = (min, max) => min + Math.random() * (max - min);
+let floatTimer = 0;
+let floatFiles = null;        // danh sách ảnh đang dùng, tự rút bớt nếu thiếu file
+
+/** Ảnh trong assets/images/bay/; chưa có tấm nào thì tạm mượn ảnh cuộn phim. */
+function anhCuonPhim() {
+  return CONFIG.photos.map((f) => CONFIG.photoDir + f);
+}
+
+function floatList() {
+  if (!floatFiles) {
+    floatFiles = (CONFIG.floatPhotos || []).map((f) => CONFIG.floatDir + f);
+    if (!floatFiles.length) floatFiles = anhCuonPhim();
+  }
+  return floatFiles;
+}
+
+function spawnFloatie(layer) {
+  if (layer.children.length >= CONFIG.floatMax) return;
+
+  const ds = floatList();
+  if (!ds.length) return;
+
+  const rong = layer.clientWidth;
+  const co = Math.round(rand(112, 168));
+  const sangPhai = Math.random() < 0.5;
+
+  const el = document.createElement('div');
+  el.className = 'floatie';
+  el.style.setProperty('--w', co + 'px');
+  el.style.setProperty('--top', rand(6, 74).toFixed(1) + '%');
+  el.style.setProperty('--dur', rand(17, 27).toFixed(1) + 's');
+  el.style.setProperty('--tilt', rand(-9, 9).toFixed(1) + 'deg');
+  // trôi hết bề ngang khung rồi mới biến mất, lúc sang phải lúc sang trái
+  el.style.setProperty('--from', (sangPhai ? -co - 30 : rong + 30) + 'px');
+  el.style.setProperty('--to', (sangPhai ? rong + 30 : -co - 30) + 'px');
+
+  const path = ds[Math.floor(Math.random() * ds.length)];
+  el.appendChild(assetImg(path, () => {
+    // thiếu file -> bỏ khỏi danh sách; hết sạch thì quay về mượn ảnh cuộn phim
+    floatFiles = ds.filter((p) => p !== path);
+    if (!floatFiles.length) floatFiles = anhCuonPhim();
+    el.remove();
+    spawnFloatie(layer);        // thay ngay bằng tấm khác, khỏi để trống
+  }));
+  el.addEventListener('animationend', () => el.remove());
+
+  layer.appendChild(el);
+}
+
+function startFloaties() {
+  const layer = $('#floaties');
+  if (!layer || reduceMotion || !CONFIG.floatMax || !CONFIG.photos.length) return;
+  if (floatTimer) return;                       // đang chạy rồi thì thôi
+
+  const henTiep = () => {
+    floatTimer = setTimeout(() => {
+      spawnFloatie(layer);
+      henTiep();
+    }, rand(CONFIG.floatGap[0], CONFIG.floatGap[1]));
+  };
+
+  spawnFloatie(layer);                          // thả một tấm ngay cho đỡ trống
+  henTiep();
+}
+
+function stopFloaties() {
+  clearTimeout(floatTimer);
+  floatTimer = 0;
+  const layer = $('#floaties');
+  if (layer) layer.textContent = '';
 }
 
 /* --------------------------------------------------------------------------
@@ -1128,6 +1289,7 @@ function setupQuiz() {
     closeScreen(quiz);
     letter.hidden = true;              // openScreen chỉ chạy khi đang ẩn
     openScreen(letter);
+    phaoGiay();                        // ăn mừng vì bạn ấy vừa trả lời
   }
 
   /* --- gửi --- */
