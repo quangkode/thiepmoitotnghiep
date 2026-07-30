@@ -85,7 +85,7 @@ const LETTERS = {
     paragraphs: [
       'Gửi {ten},',
       'Không sao đâu, mình hiểu mà. Điều mình muốn nói không nằm ở chuyện hôm đó bạn có mặt hay không, mà là cảm ơn bạn đã đi cùng mình suốt quãng đường vừa rồi.',
-      'Tấm bằng này có một phần của bạn trong đó. Hẹn gặp bạn một ngày gần nhất, mình mời cà phê!',
+      'Tấm bằng này có một phần của bạn trong đó. Hẹn gặp bạn một ngày gần nhất nhé!',
     ],
   },
 };
