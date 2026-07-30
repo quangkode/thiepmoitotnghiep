@@ -10,7 +10,14 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
    Gồm lời cảm ơn, "Bạn là ai?", tích **Có / Không**; tích Có mới hiện phần chọn giờ đến (8h–12h, mỗi 5 phút).
 4. **Thư cảm ơn + cuộn phim** — gửi xong chuyển sang màn thư. Ai chọn *Có* và ai chọn *Không*
    đọc hai lá thư khác nhau. Bên phải là dải phim ảnh tự trôi lên không ngừng.
-   Lần sau khách mở lại thì vào thẳng thư này, muốn đổi thì bấm "Sửa câu trả lời".
+   Lần sau khách mở lại thì vào thẳng thư này (một chiều, không sửa lại câu trả lời được).
+   Cuối thư có nút **Để lại lời chúc**.
+5. **Màn lời chúc** — bấm nút ở cuối thư thì mở màn này (màn duy nhất cuộn được). *Đang làm tiếp.*
+
+### Bỏ ảnh chữ ký vào thư
+
+Lưu ảnh chữ ký (nền trắng hoặc PNG trong suốt) thành `assets/images/chu-ky.png`,
+rồi trong [index.html](index.html) xoá 2 dòng `<!--` / `-->` bọc quanh khối chữ ký ở màn thư.
 
 ## Thay ảnh cho cuộn phim
 
@@ -19,7 +26,8 @@ Khung nào chưa có ảnh thì để trống, không lỗi gì cả.
 
 - Ảnh **dọc** hợp nhất (khung tỉ lệ 3:4), ảnh ngang sẽ bị cắt hai bên.
 - Muốn nhiều/ít ảnh hơn hoặc đổi tên file: sửa mảng `photos` trong [js/main.js](js/main.js).
-- Muốn phim chạy nhanh/chậm: sửa `44s` ở `animation: film-roll` trong [css/style.css](css/style.css).
+- Muốn phim chạy nhanh/chậm: sửa `48s` ở `animation: film-roll` trong [css/style.css](css/style.css).
+- Muốn dải phim to/nhỏ hơn: sửa `flex: 0 0 clamp(104px, 35%, 160px)` ở `.film` trong [css/style.css](css/style.css).
 
 ## Sửa lời thư
 

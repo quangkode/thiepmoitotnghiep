@@ -151,15 +151,20 @@
     <section class="letter" id="letter" tabindex="-1" hidden>
 
       <div class="letter__paper">
-        <p class="letter__eyebrow" id="letterEyebrow">Thư cảm ơn</p>
-        <h2 class="letter__title" id="letterTitle"></h2>
+        <div class="letter__inner">
+          <p class="letter__eyebrow">Thư cảm ơn</p>
+          <h2 class="letter__title" id="letterTitle"></h2>
 
-        <div class="letter__body" id="letterBody"></div>
+          <div class="letter__body" id="letterBody"></div>
 
-        <p class="letter__sign-label">Thương mến,</p>
-        <p class="letter__sign" id="letterSign"></p>
+          <!-- CHỮ KÝ: bỏ ảnh chữ ký vào assets/images/chu-ky.png
+               rồi xoá 2 dòng dấu comment bao quanh khối dưới đây là hiện ra.
+          <p class="letter__sign-label">Thương mến,</p>
+          <img class="letter__signature" src="/assets/images/chu-ky.png" alt="Trần Minh Quang" />
+          -->
 
-        <button class="letter__edit" type="button" id="editBtn">Sửa câu trả lời</button>
+          <button class="btn letter__wish" type="button" id="wishBtn">Để lại lời chúc</button>
+        </div>
       </div>
 
       <!-- cuộn phim: ảnh tự trôi lên, thay ảnh trong assets/images/photos/ -->
@@ -167,6 +172,22 @@
         <div class="film__track" id="filmTrack"></div>
       </div>
 
+    </section>
+
+    <!-- ================================================================
+         MÀN 5 — ĐỂ LẠI LỜI CHÚC (màn này cuộn được)
+         ================================================================ -->
+    <section class="wish" id="wish" tabindex="-1" hidden>
+      <div class="wish__inner">
+        <p class="wish__eyebrow">Lời chúc</p>
+        <h2 class="wish__title">Viết cho mình vài dòng nhé</h2>
+        <p class="wish__lead">
+          Một câu thôi cũng được — mình sẽ giữ lại hết.
+        </p>
+
+        <!-- ==== CHỖ LÀM TIẾP: nội dung màn lời chúc thêm vào đây ==== -->
+        <div class="wish__slot" id="wishSlot"></div>
+      </div>
     </section>
 
   </div>

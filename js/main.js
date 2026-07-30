@@ -7,6 +7,7 @@ const CONFIG = {
   hostName: 'Trần Minh Quang',
   startsAt: '2026-08-02T08:00:00+07:00',   // giờ VN
   venue: 'Hội trường Nguyễn Văn Đạo, Đại học Quốc gia Hà Nội',
+  venueShort: 'Hội trường Nguyễn Văn Đạo',   // dùng trong thư cho gọn dòng
   address: '144 Xuân Thủy, Cầu Giấy, Hà Nội',
   dateText: 'Chủ nhật ngày 2 tháng 8',
 
@@ -36,11 +37,10 @@ const CONFIG = {
 const LETTERS = {
   /* Khách chọn CÓ đến */
   co: {
-    title: 'Hẹn gặp bạn ngày hôm đó',
+    title: 'Hẹn gặp bạn hôm đó',
     paragraphs: [
       'Gửi {ten},',
-      'Cảm ơn bạn đã nhận lời tới dự buổi lễ tốt nghiệp của mình. Bốn năm trôi qua nhanh hơn mình tưởng, và tới ngày cầm được tấm bằng trên tay, mình mới thấy rõ một điều: chặng đường đó chưa bao giờ mình đi một mình.',
-      'Cảm ơn vì những lần bạn chịu nghe mình than, những lần kéo mình dậy lúc mọi thứ rối tung, và cả những chuyện nhỏ xíu mà giờ nhớ lại vẫn thấy buồn cười.',
+      'Cảm ơn bạn đã nhận lời tới dự lễ tốt nghiệp của mình. Bốn năm trôi qua nhanh hơn mình tưởng, và tới ngày cầm tấm bằng trên tay, mình mới thấy rõ một điều: chặng đường đó chưa bao giờ mình đi một mình.',
       'Hẹn gặp bạn lúc <strong>{gio}</strong>, {ngay} tại {diadiem}. Nhớ mặc đẹp vào để còn chụp ảnh nhé!',
     ],
   },
@@ -50,8 +50,7 @@ const LETTERS = {
     title: 'Cảm ơn vì đã đồng hành',
     paragraphs: [
       'Gửi {ten},',
-      'Không sao đâu, mình hiểu mà. Thật ra điều mình muốn nói không nằm ở chuyện hôm đó bạn có mặt hay không, mà là cảm ơn bạn đã đồng hành cùng mình suốt quãng đường vừa rồi.',
-      'Cảm ơn vì đã ở đó những lúc mình chông chênh nhất, vì những lời động viên đúng lúc, và vì đã tin mình sẽ làm được — kể cả khi chính mình còn chưa tin.',
+      'Không sao đâu, mình hiểu mà. Điều mình muốn nói không nằm ở chuyện hôm đó bạn có mặt hay không, mà là cảm ơn bạn đã đi cùng mình suốt quãng đường vừa rồi.',
       'Tấm bằng này có một phần của bạn trong đó. Hẹn gặp bạn một ngày gần nhất, mình mời cà phê!',
     ],
   },
@@ -170,11 +169,21 @@ function fillLetter(answer) {
     .replaceAll('{ten}', answer.name || 'bạn')
     .replaceAll('{gio}', answer.time || '')
     .replaceAll('{ngay}', CONFIG.dateText)
-    .replaceAll('{diadiem}', CONFIG.venue);
+    .replaceAll('{diadiem}', CONFIG.venueShort || CONFIG.venue);
 
   $('#letterTitle').textContent = tpl.title;
   $('#letterBody').innerHTML = tpl.paragraphs.map((p) => `<p>${fill(p)}</p>`).join('');
-  $('#letterSign').textContent = CONFIG.hostName;
+}
+
+/** Sang màn để lại lời chúc (màn này cuộn được, không quay lại thư nữa). */
+function openWish() {
+  const letter = $('#letter');
+  const wish = $('#wish');
+  if (!wish) return;
+
+  closeScreen(letter);
+  document.body.classList.remove('is-locked');
+  openScreen(wish);
 }
 
 /** Dựng cuộn phim: nhân đôi danh sách ảnh để chạy vòng lặp không thấy mối nối. */
@@ -284,7 +293,6 @@ function setupQuiz() {
   const minuteSel = $('#minute');
   const status = $('#formStatus');
   const submitBtn = $('#submitBtn');
-  const intro = $('#quizIntro');
   const quiz = $('#quiz');
   const letter = $('#letter');
   const nameError = $('#nameError');
@@ -316,32 +324,6 @@ function setupQuiz() {
     openScreen(letter);
   }
 
-  /* --- quay lại sửa câu trả lời --- */
-  let saved = readSaved();
-
-  $('#editBtn')?.addEventListener('click', () => {
-    if (saved) {
-      nameInput.value = saved.name || '';
-      attendInputs.forEach((i) => { i.checked = i.value === saved.attend; });
-      timeField.hidden = saved.attend !== 'co';
-      if (saved.time) {
-        const [h, m] = saved.time.split(':');
-        hourSel.value = h;
-        fillMinutes(minuteSel, h, m);
-      }
-    }
-
-    status.textContent = '';
-    status.className = 'form-status';
-    intro.hidden = false;
-    form.hidden = false;
-
-    closeScreen(letter);
-    quiz.hidden = true;
-    openScreen(quiz);
-    nameInput.focus();
-  });
-
   /* --- gửi --- */
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -367,7 +349,7 @@ function setupQuiz() {
 
     try {
       await sendAnswer({ ...answer, device: navigator.userAgent });
-      saved = { ...answer, at: new Date().toISOString() };
+      const saved = { ...answer, at: new Date().toISOString() };
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch (e) { /* bỏ qua */ }
       goToLetter(saved);
     } catch (err) {
@@ -393,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupQuiz();
 
   btn?.addEventListener('click', () => openInvite(gate, invite, btn));
+  $('#wishBtn')?.addEventListener('click', openWish);
 
   // Mở thẳng thiệp, bỏ qua màn cổng: thêm #thiep vào cuối đường dẫn
   if (location.hash === '#thiep') openInvite(gate, invite, btn);
