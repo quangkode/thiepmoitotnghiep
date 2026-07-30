@@ -19,6 +19,20 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
 6. **Ảnh polaroid trôi ngang** ở trang chủ sổ lưu bút — lâu lâu thả một tấm, lúc sang trái lúc sang phải,
    nằm dưới nội dung nên không che chữ. Chỉnh `floatGap` (giãn cách) và `floatMax` (số tấm cùng lúc)
    trong [js/main.js](js/main.js); để `floatMax: 0` là tắt hẳn.
+7. **Nhạc nền** — bắt đầu từ lúc khách bấm "Ấn vào đây" (trình duyệt nào cũng cấm tự phát nhạc
+   trước khi khách chạm vào trang). Góc trên bên phải có nút ba vạch nhún nhảy để tắt / bật,
+   tắt rồi thì lần sau khách vào vẫn im. Xem [assets/audio/](assets/audio/).
+
+## Nhạc nền
+
+Bỏ file nhạc vào [assets/audio/](assets/audio/), đặt tên `nhac.m4a`.
+
+- `.m4a` chạy tốt trên Chrome, Safari, Edge, Firefox, iPhone lẫn Android — không phải đổi sang mp3.
+  Dùng đuôi khác thì sửa `music` trong [js/main.js](js/main.js) cho khớp.
+- Nên để **dưới 4 MB**. Nhạc chỉ tải lúc khách bấm mở thiệp, không tải sẵn lúc vào trang.
+- To nhỏ chỉnh ở `musicVolume` (0 tới 1), mặc định `0.35`. Tắt hẳn thì để `music: ''`.
+- Thay nhạc mới cùng tên nhớ tăng `assetVersion`, không thì máy khách vẫn phát bản cũ.
+- Chưa có file thì nút nhạc tự ẩn, trang vẫn chạy bình thường.
 
 ## Ảnh trôi ngang ở sổ lưu bút
 

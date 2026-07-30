@@ -58,6 +58,14 @@ const CONFIG = {
   floatGap: [4500, 9500],
   floatMax: 3,
 
+  /* Nhạc nền — bỏ file vào assets/audio/ rồi ghi đúng tên vào đây.
+     Chạy được .m4a, .mp3, .ogg, .wav — cứ .m4a cũng tốt.
+     Trình duyệt CẤM tự phát nhạc khi khách chưa chạm vào trang, nên nhạc chỉ
+     bắt đầu lúc khách bấm "Ấn vào đây" ở màn cổng. Góc trên bên phải có nút tắt/bật.
+     Để trống '' là tắt hẳn, không tải file nào cả. */
+  music: '/assets/audio/nhac.m4a',
+  musicVolume: 0.35,          // 0 tới 1 — để nhỏ thôi cho khỏi giật mình
+
   /* Tăng số này mỗi khi thay ảnh trong assets/images/ (sticker, cuộn phim, chữ ký).
      Ảnh được gắn thêm ?v=<số> nên trình duyệt buộc phải tải bản mới thay vì dùng bản cũ. */
   assetVersion: 4,
@@ -165,11 +173,89 @@ function spawnQuestionMarks(layer, count = 16) {
 }
 
 /* --------------------------------------------------------------------------
+   1b. Nhạc nền
+   Trình duyệt nào cũng chặn nhạc tự phát khi khách chưa chạm vào trang, nên
+   nhạc chỉ bắt đầu từ cú bấm "Ấn vào đây". Khách tắt rồi thì nhớ luôn cho lần sau.
+   -------------------------------------------------------------------------- */
+const MUSIC_KEY = 'nhac-tat:tran-minh-quang';
+
+let bgm = null;          // thẻ <audio>, null nghĩa là không có nhạc
+let muteBtn = null;
+let nhacTat = false;     // khách tự tắt
+let daMoNhac = false;    // đã tới lúc được phép phát chưa
+
+function setupMusic() {
+  const el = $('#bgm');
+  muteBtn = $('#muteBtn');
+  if (!el || !muteBtn || !CONFIG.music) return;
+
+  bgm = el;
+  bgm.src = assetUrl(CONFIG.music);
+  bgm.loop = true;
+  bgm.volume = Math.min(1, Math.max(0, CONFIG.musicVolume ?? 0.35));
+
+  try { nhacTat = localStorage.getItem(MUSIC_KEY) === '1'; } catch (e) { /* bỏ qua */ }
+
+  // chưa đẩy file nhạc lên (hoặc file hỏng) -> coi như không có nhạc, giấu nút đi
+  bgm.addEventListener('error', () => {
+    bgm = null;
+    muteBtn.hidden = true;
+  });
+
+  // vẽ nút theo tình trạng thật của thẻ audio, chứ không đoán:
+  // iOS ngắt nhạc, rút tai nghe, có cuộc gọi... đều rơi vào đây
+  ['play', 'playing', 'pause'].forEach((ten) => bgm.addEventListener(ten, veNutNhac));
+
+  muteBtn.addEventListener('click', () => {
+    nhacTat = !nhacTat;
+    try { localStorage.setItem(MUSIC_KEY, nhacTat ? '1' : '0'); } catch (e) { /* bỏ qua */ }
+    if (nhacTat) bgm?.pause();
+    else bgm?.play().catch(() => { /* trình duyệt chặn thì thôi */ });
+    veNutNhac();
+  });
+
+  // chuyển sang tab khác thì im, quay lại thì hát tiếp
+  document.addEventListener('visibilitychange', () => {
+    if (!bgm) return;
+    if (document.hidden) bgm.pause();
+    else if (!nhacTat && daMoNhac) bgm.play().catch(() => { /* kệ */ });
+  });
+}
+
+/** Gọi từ trong một cú chạm của khách thì trình duyệt mới cho phát. */
+function batNhac() {
+  if (!bgm) return;
+  daMoNhac = true;
+  muteBtn.hidden = false;
+  veNutNhac();
+  if (nhacTat) return;
+
+  bgm.play().catch(() => {
+    // vẫn bị chặn (mở thẳng bằng #thiep chẳng hạn) -> chờ khách chạm lần nữa
+    veNutNhac();
+    document.addEventListener('pointerdown', () => {
+      if (!nhacTat) bgm?.play().catch(() => {});
+    }, { once: true });
+  });
+}
+
+/** Ba vạch nhún nhảy khi đang hát, nằm im khi tắt. */
+function veNutNhac() {
+  if (!muteBtn) return;
+  const dangHat = !!bgm && !bgm.paused && !nhacTat;
+  muteBtn.classList.toggle('is-off', !dangHat);
+  muteBtn.setAttribute('aria-pressed', String(nhacTat));
+  muteBtn.setAttribute('aria-label', nhacTat ? 'Bật nhạc' : 'Tắt nhạc');
+  muteBtn.title = nhacTat ? 'Bật nhạc' : 'Tắt nhạc';
+}
+
+/* --------------------------------------------------------------------------
    2. Mở thiệp: ẩn màn cổng -> hiện tấm save the date
    -------------------------------------------------------------------------- */
 function openInvite(gate, invite, btn) {
   if (!gate || gate.hidden) return;
 
+  batNhac();               // đang trong cú bấm của khách -> phát được
   if (btn) btn.disabled = true;
   gate.classList.add('is-open');
 
@@ -1280,6 +1366,7 @@ document.addEventListener('DOMContentLoaded', () => {
   buildFilm();
   setupQuiz();
   setupWishForm();
+  setupMusic();
 
   btn?.addEventListener('click', () => openInvite(gate, invite, btn));
   $('#wishBtn')?.addEventListener('click', openWish);
