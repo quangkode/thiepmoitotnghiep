@@ -62,6 +62,11 @@ Bỏ ảnh vào [assets/images/sticker/](assets/images/sticker/), đặt tên `1
 - Nên dùng **PNG nền trong suốt, khung vuông**, cỡ **512px** mỗi chiều là dư đẹp
   (17 sticker hiện tại = 2.4MB; ảnh 2000px thì 17 cái đã 27MB, mở trên 4G rất chậm).
 - Sticker chỉ tải khi có người mở trang viết, nên ảnh nặng không làm chậm lúc mở thiệp.
+
+> **Thay hoặc thêm ảnh trong `assets/images/` thì tăng `assetVersion`** trong [js/main.js](js/main.js).
+> Ảnh được gọi kèm `?v=<số>`; không đổi số thì trình duyệt khách vẫn dùng bản đã nhớ.
+> Ảnh nào lỗi, trang tự xin lại một lần bằng đường dẫn khác rồi mới bỏ qua — nên kể cả máy
+> đã nhớ "404" từ hồi chưa có ảnh cũng tự khỏi, không cần khách làm gì.
 - File nào chưa có thì trang tự bỏ qua. Chưa có file nào thì phần "Dán sticker" tự ẩn,
   và phần chọn con dấu dùng emoji thay thế.
 - Muốn thêm quá 12 sticker: viết thêm tên file vào mảng `stickers` trong [js/main.js](js/main.js).

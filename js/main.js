@@ -46,6 +46,10 @@ const CONFIG = {
 
   /* Mỗi lời chúc dán được nhiều nhất mấy sticker */
   maxStickers: 5,
+
+  /* Tăng số này mỗi khi thay ảnh trong assets/images/ (sticker, cuộn phim, chữ ký).
+     Ảnh được gắn thêm ?v=<số> nên trình duyệt buộc phải tải bản mới thay vì dùng bản cũ. */
+  assetVersion: 2,
 };
 
 /* ==========================================================================
@@ -78,6 +82,35 @@ const LETTERS = {
 const STORAGE_KEY = 'rsvp:tran-minh-quang';
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (sel) => document.querySelector(sel);
+
+/** Đường dẫn ảnh có kèm ?v= để trình duyệt không dùng bản đã nhớ từ trước. */
+function assetUrl(path) {
+  return path + (path.includes('?') ? '&' : '?') + 'v=' + CONFIG.assetVersion;
+}
+
+/**
+ * Thẻ <img> cho ảnh trong assets/.
+ * Lỗi lần đầu thì thử lại một lần với đường dẫn khác hẳn, vì trình duyệt có thể
+ * đang giữ một phản hồi 404 cũ (hồi ảnh chưa được đẩy lên) và không chịu xin lại.
+ * Thử lại vẫn lỗi -> gọi onFail để chỗ gọi tự dọn, khách không thấy ô trống hay lỗi gì.
+ */
+function assetImg(path, onFail) {
+  const img = document.createElement('img');
+  img.alt = '';
+  let daThuLai = false;
+
+  img.addEventListener('error', () => {
+    if (!daThuLai) {
+      daThuLai = true;
+      img.src = path + '?r=' + Math.random().toString(36).slice(2, 9);
+      return;
+    }
+    if (onFail) onFail(img);
+  });
+
+  img.src = assetUrl(path);
+  return img;
+}
 
 /** Câu trả lời đã lưu trong máy khách (null nếu chưa trả lời). */
 function readSaved() {
@@ -219,12 +252,10 @@ function buildFilm() {
       frame.className = 'film__frame is-empty';
       frame.dataset.label = String(i + 1);
 
-      const img = document.createElement('img');
+      // chưa có ảnh -> để khung trống, không lỗi gì cả
+      const img = assetImg(CONFIG.photoDir + file, (el) => el.remove());
       img.loading = 'lazy';
-      img.alt = '';
       img.addEventListener('load', () => frame.classList.remove('is-empty'));
-      img.addEventListener('error', () => img.remove());   // chưa có ảnh -> để khung trống
-      img.src = CONFIG.photoDir + file;
 
       frame.appendChild(img);
       frag.appendChild(frame);
@@ -443,12 +474,9 @@ async function sendWish(wish) {
 /** Ảnh sticker, tải kiểu lazy (chỉ tải khi thật sự hiện ra màn hình).
     File không có thì gọi onFail để chỗ gọi tự dọn, không báo lỗi gì cho khách. */
 function stickerImg(file, onFail) {
-  const img = document.createElement('img');
+  const img = assetImg(CONFIG.stickerDir + file, onFail);
   img.loading = 'lazy';
-  img.alt = '';
   img.draggable = false;
-  if (onFail) img.addEventListener('error', () => onFail(img));
-  img.src = CONFIG.stickerDir + file;
   return img;
 }
 
