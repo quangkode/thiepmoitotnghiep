@@ -16,6 +16,8 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
    Gồm 3 trang con: *trang chủ* (con dấu của mọi người, 3 người một dòng — bấm vào mở lời chúc của người đó),
    *trang một người*, và *trang viết* (tên → chọn con dấu + màu mực → viết lời chúc, chọn 1 trong 3 kiểu chữ →
    dán sticker: bấm để dán rồi **kéo thả tự do**, có nút to hơn / nhỏ đi / quay / bỏ ra).
+6. **Nút menu tròn** — mặt cười nhỏ ở góc dưới phải, chỉ hiện từ màn thư trở đi.
+   Chạm vào bung ra 3 trang: *Thiệp mời*, *Thư cảm ơn*, *Sổ lưu bút* — nhảy qua lại thoải mái.
 
 > ⚠️ **Còn 1 việc: triển khai lại Apps Script.** `wishEndpoint` đã điền sẵn (cùng link `.../exec`
 > với quiz), nhưng bản Apps Script đang chạy trên Google là bản cũ — chưa biết nhận lời chúc.
@@ -47,7 +49,7 @@ rồi trong [index.html](index.html) xoá 2 dòng `<!--` / `-->` bọc quanh kh�
 ## Thay ảnh cho cuộn phim
 
 Bỏ ảnh vào [assets/images/photos/](assets/images/photos/), đặt tên `1.jpg`, `2.jpg`, … `8.jpg`.
-Khung nào chưa có ảnh thì để trống, không lỗi gì cả.
+Khung nào chưa có ảnh thì để trống, không lỗi gì cả. (Đang có đủ 8 ảnh, mỗi ảnh ~900px / dưới 110KB.)
 
 - Ảnh **dọc** hợp nhất (khung tỉ lệ 3:4), ảnh ngang sẽ bị cắt hai bên.
 - Muốn nhiều/ít ảnh hơn hoặc đổi tên file: sửa mảng `photos` trong [js/main.js](js/main.js).
