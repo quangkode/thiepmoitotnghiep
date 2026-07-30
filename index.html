@@ -248,6 +248,22 @@
               <span class="field__num">4</span> Dán sticker cho đẹp
               <span class="field__hint" id="stickerCount"></span>
             </legend>
+
+            <p class="field__note">Bấm sticker ở dưới để dán, rồi <strong>kéo</strong> tới chỗ bạn muốn.</p>
+
+            <!-- khung dán: xem trước đúng như lời chúc sẽ hiện ra -->
+            <div class="paperbox paperbox--pad" id="stickerPad">
+              <div class="paperbox__text" id="padText"></div>
+              <div class="paperbox__layer" id="padLayer"></div>
+            </div>
+
+            <div class="padtools" id="padTools" hidden>
+              <button class="padtool" type="button" data-act="bigger" aria-label="To hơn">＋</button>
+              <button class="padtool" type="button" data-act="smaller" aria-label="Nhỏ đi">－</button>
+              <button class="padtool" type="button" data-act="rotate" aria-label="Quay">↻</button>
+              <button class="padtool padtool--del" type="button" data-act="remove">Bỏ ra</button>
+            </div>
+
             <div class="picker picker--sticker" id="stickerGrid" role="group" aria-label="Chọn sticker"></div>
           </fieldset>
 

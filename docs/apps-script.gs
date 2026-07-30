@@ -144,7 +144,8 @@ function docLoiChuc_() {
         value: cut > 0 ? icon.slice(cut + 1) : icon,
       },
       hue: Number(r[6]) || 212,
-      stickers: String(r[7] || '').split(',').map(function (s) { return s.trim(); }).filter(String),
+      // giữ nguyên chuỗi "file:x:y:góc:cỡ,..." — trang web tự tách và đặt sticker đúng chỗ
+      stickers: String(r[7] || ''),
       at: r[0] ? new Date(r[0]).toISOString() : '',
     });
   }
@@ -221,7 +222,7 @@ function getWishSheet_() {
     sheet = ss.insertSheet(WISH_SHEET_NAME);
     sheet.appendRow([
       'Thời điểm gửi', 'Mã', 'Tên', 'Lời chúc', 'Kiểu chữ',
-      'Icon con dấu', 'Màu (hue)', 'Sticker', 'Ẩn (gõ x)',
+      'Icon con dấu', 'Màu (hue)', 'Sticker (file:x:y:góc:cỡ)', 'Ẩn (gõ x)',
     ]);
     sheet.getRange('A1:I1').setFontWeight('bold');
     sheet.setFrozenRows(1);

@@ -14,7 +14,8 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
    Cuối thư có nút **Để lại lời chúc**.
 5. **Sổ lưu bút** — bấm nút ở cuối thư thì mở màn này (màn duy nhất cuộn được), nền là trang vở lò xo.
    Gồm 3 trang con: *trang chủ* (con dấu của mọi người, 3 người một dòng — bấm vào mở lời chúc của người đó),
-   *trang một người*, và *trang viết* (tên → chọn con dấu + màu mực → viết lời chúc, chọn 1 trong 3 kiểu chữ → dán sticker).
+   *trang một người*, và *trang viết* (tên → chọn con dấu + màu mực → viết lời chúc, chọn 1 trong 3 kiểu chữ →
+   dán sticker: bấm để dán rồi **kéo thả tự do**, có nút to hơn / nhỏ đi / quay / bỏ ra).
 
 > ⚠️ **Lời chúc chưa có nơi lưu chung.** `CONFIG.wishEndpoint` trong [js/main.js](js/main.js) đang để trống
 > nên lời chúc chỉ nằm trong máy người viết — người khác mở lên sẽ không thấy.
@@ -60,7 +61,11 @@ Bỏ ảnh vào [assets/images/sticker/](assets/images/sticker/), đặt tên `1
 - File nào chưa có thì trang tự bỏ qua. Chưa có file nào thì phần "Dán sticker" tự ẩn,
   và phần chọn con dấu dùng emoji thay thế.
 - Muốn thêm quá 12 sticker: viết thêm tên file vào mảng `stickers` trong [js/main.js](js/main.js).
-- Muốn cho dán nhiều hơn 3 sticker mỗi lời chúc: sửa `maxStickers`.
+- Mỗi lời chúc dán tối đa **5** sticker — sửa `maxStickers` trong [js/main.js](js/main.js) nếu muốn khác.
+
+Trong Sheet, cột **Sticker** ghi dạng `file:x:y:góc:cỡ`, nhiều cái cách nhau bằng dấu phẩy —
+ví dụ `3.png:38:24:-8:22,5.png:72:61:6:18`. `x`, `y`, `cỡ` là **phần trăm khung giấy** nên
+điện thoại hay máy tính đều hiện đúng chỗ người dán. Sửa tay mấy số này trong Sheet cũng được.
 
 ## Sửa lời thư
 

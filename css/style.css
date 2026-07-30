@@ -819,39 +819,100 @@ body.is-locked { overflow: hidden; height: 100svh; }
   color: rgba(17, 17, 17, 0.42);
 }
 
-.note__text {
-  margin-top: 18px;
+/* Khung giấy: dùng CHUNG cho trang xem và khung dán sticker, cùng bề ngang +
+   cùng cỡ chữ + cùng min-height -> toạ độ % của sticker khớp nhau tuyệt đối. */
+.paperbox {
+  position: relative;
+  margin-top: 16px;
+  min-height: 320px;
+}
+
+.paperbox__text {
+  padding: 12px 12px 0;                /* giống nhau ở cả 2 khung -> chữ ngắt dòng y hệt */
   font-size: 15px;
-  line-height: var(--rule-gap);        /* chữ nằm đúng trên dòng kẻ */
+  line-height: var(--rule-gap);        /* chữ chạy theo dòng kẻ của trang vở */
   color: var(--note-ink);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+.paperbox__layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;                /* trang xem: sticker chỉ để ngắm */
+}
+
+/* sticker đã dán — x/y/cỡ tính theo % khung giấy nên máy nào cũng đúng chỗ */
+.sticker {
+  position: absolute;
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  width: var(--w, 22%);
+  transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+  filter: drop-shadow(0 3px 5px rgba(17, 17, 17, 0.18));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* --- khung dán ở trang viết --- */
+/* Viền khung dán vẽ bằng outline (không phải border) để không đổi bề ngang
+   chữ bên trong -> chữ ngắt dòng hệt trang xem, sticker không bị lệch chỗ. */
+.paperbox--pad {
+  outline: 1.5px dashed rgba(17, 17, 17, 0.2);
+  outline-offset: -1.5px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  overflow: hidden;
+  touch-action: none;                  /* kéo sticker thì trang không cuộn theo */
+}
+.paperbox__text.is-faded { color: rgba(17, 17, 17, 0.32); }
+.paperbox--pad .paperbox__layer { pointer-events: auto; }
+
+.paperbox--pad .sticker {
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.paperbox--pad .sticker.is-picked {
+  outline: 2px dashed var(--blue);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.padtools { display: flex; gap: 8px; margin-top: 10px; }
+
+.padtool {
+  min-width: 42px;
+  padding: 9px 12px;
+  border: 1.5px solid rgba(17, 17, 17, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.padtool--del { margin-left: auto; font-size: 13px; color: #c0392b; }
+.padtool:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.field__note {
+  margin-bottom: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.5);
+}
+
+.field__note strong { color: var(--ink); }
+
 /* 3 kiểu chữ khách chọn — dùng cho cả ô nhập lẫn lời chúc đã gửi */
 .font--tay { font-family: "Patrick Hand", "Segoe Print", cursive; }
 .font--bay { font-family: "Dancing Script", "Segoe Script", cursive; font-weight: 600; }
 
-.note__text.font--tay { font-size: 19.5px; }
-.note__text.font--bay { font-size: 19px; }
+.paperbox__text.font--tay { font-size: 19.5px; }
+.paperbox__text.font--bay { font-size: 19px; }
 .field__area.font--tay { font-size: 19px; }
 .field__area.font--bay { font-size: 18px; }
-
-.note__stickers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.note__stickers img {
-  width: clamp(56px, 22%, 84px);
-  height: auto;
-  filter: drop-shadow(0 3px 5px rgba(17, 17, 17, 0.16));
-}
-
-.note__stickers img:nth-child(odd) { transform: rotate(-7deg); }
-.note__stickers img:nth-child(even) { transform: rotate(6deg); }
 
 /* ---------- 5h. Trang viết lời chúc ---------- */
 .wishform {

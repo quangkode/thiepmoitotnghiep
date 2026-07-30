@@ -41,7 +41,9 @@ const CONFIG = {
      Để trống '' thì lời chúc chỉ nằm trong máy của người viết (chưa ai thấy được).
      Nối xong Google Apps Script (hoặc chỗ khác) thì dán link .../exec vào đây. */
   wishEndpoint: '',
-  maxStickers: 3,
+
+  /* Mỗi lời chúc dán được nhiều nhất mấy sticker */
+  maxStickers: 5,
 };
 
 /* ==========================================================================
@@ -250,7 +252,52 @@ const WISH_HUES = [212, 344, 26, 142, 268, 46];
 
 let wishList = [];        // danh sách đang hiện trên trang chủ
 let stickerFiles = [];    // sticker thật sự có trong assets/images/sticker/
+let picked = null;        // sticker đang được chọn ở khung dán
 const draft = { icon: null, hue: WISH_HUES[0], font: 'tay', stickers: [] };
+
+const clampNum = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+/* --------------------------------------------------------------------------
+   Sticker đã dán: mỗi cái là { file, x, y, rot, size }
+   x, y, size tính theo % khung giấy -> điện thoại hay máy tính đều đúng chỗ.
+   Ghi vào Google Sheet thành một ô: "file:x:y:góc:cỡ" cách nhau bằng dấu phẩy,
+   ví dụ: 3.png:38:24:-8:22,5.png:72:61:6:18
+   -------------------------------------------------------------------------- */
+function normSticker(s, i = 0) {
+  const num = (v, fallback) => {
+    const n = Number(v);
+    return v === '' || v === null || v === undefined || !Number.isFinite(n) ? fallback : n;
+  };
+
+  return {
+    file: String(s.file || ''),
+    x: clampNum(num(s.x, 26 + (i % 3) * 24), 0, 100),
+    y: clampNum(num(s.y, 66 + (i % 2) * 14), 0, 100),
+    rot: clampNum(num(s.rot, [-8, 7, -4, 10, 0][i % 5]), -180, 180),
+    size: clampNum(num(s.size, 22), 8, 60),
+  };
+}
+
+function parseStickers(value) {
+  if (!value) return [];
+  const raw = Array.isArray(value) ? value : String(value).split(',');
+
+  return raw
+    .map((one, i) => {
+      if (one && typeof one === 'object') return normSticker(one, i);
+
+      const p = String(one).trim().split(':');
+      if (!p[0]) return null;
+      return normSticker({ file: p[0], x: p[1], y: p[2], rot: p[3], size: p[4] }, i);
+    })
+    .filter((s) => s && s.file);
+}
+
+function serializeStickers(items) {
+  return (items || [])
+    .map((s) => [s.file, Math.round(s.x), Math.round(s.y), Math.round(s.rot), Math.round(s.size)].join(':'))
+    .join(',');
+}
 
 /** Lời chúc lưu trong máy khách — dùng khi chưa nối nơi lưu chung. */
 function readLocalWishes() {
@@ -333,7 +380,7 @@ function wishPayload(wish) {
     font: wish.font,
     hue: String(wish.hue),
     icon: (icon.type || 'emoji') + ':' + (icon.value || ''),
-    stickers: (wish.stickers || []).join(','),
+    stickers: serializeStickers(wish.stickers),
     at: wish.at,
   };
 }
@@ -483,28 +530,46 @@ function showOneWish(wish) {
   head.appendChild(seal);
   head.appendChild(who);
 
-  const text = document.createElement('div');
-  text.className = 'note__text font--' + (wish.font || 'tay');
-  text.textContent = wish.text || '';
-
   box.appendChild(head);
-  box.appendChild(text);
-
-  const files = (wish.stickers || []).filter(Boolean);
-  if (files.length) {
-    const row = document.createElement('div');
-    row.className = 'note__stickers';
-    files.forEach((file) => {
-      const img = document.createElement('img');
-      img.src = CONFIG.stickerDir + file;
-      img.alt = '';
-      img.addEventListener('error', () => img.remove());
-      row.appendChild(img);
-    });
-    box.appendChild(row);
-  }
+  box.appendChild(paperBox(wish.text, wish.font, parseStickers(wish.stickers)));
 
   showWishView('wishOne');
+}
+
+/** Khung giấy: chữ lời chúc + lớp sticker đã dán đúng vị trí. */
+function paperBox(text, font, items) {
+  const box = document.createElement('div');
+  box.className = 'paperbox';
+
+  const body = document.createElement('div');
+  body.className = 'paperbox__text font--' + (font || 'tay');
+  body.textContent = text || '';
+
+  const layer = document.createElement('div');
+  layer.className = 'paperbox__layer';
+  items.forEach((item) => layer.appendChild(stickerNode(item)));
+
+  box.appendChild(body);
+  box.appendChild(layer);
+  return box;
+}
+
+function applySticker(el, item) {
+  el.style.setProperty('--x', item.x + '%');
+  el.style.setProperty('--y', item.y + '%');
+  el.style.setProperty('--w', item.size + '%');
+  el.style.setProperty('--r', item.rot + 'deg');
+}
+
+function stickerNode(item) {
+  const img = document.createElement('img');
+  img.className = 'sticker';
+  img.src = CONFIG.stickerDir + item.file;
+  img.alt = '';
+  img.draggable = false;
+  applySticker(img, item);
+  img.addEventListener('error', () => img.remove());
+  return img;
 }
 
 /* --------------------------------------------------------------------------
@@ -604,6 +669,7 @@ function buildFontPicker() {
         draft.font = font.id;
         setPressed(row, b);
         if (area) area.className = 'field__area font--' + font.id;
+        renderPadText();
       },
     });
     btn.textContent = font.label;
@@ -615,12 +681,10 @@ function buildFontPicker() {
 function buildStickerPicker() {
   const field = $('#stickerField');
   const grid = $('#stickerGrid');
-  const count = $('#stickerCount');
   if (!field || !grid) return;
 
   field.hidden = stickerFiles.length === 0;   // chưa có ảnh thì ẩn hẳn phần này
   grid.textContent = '';
-  if (count) count.textContent = `chọn tối đa ${CONFIG.maxStickers}`;
 
   stickerFiles.forEach((file) => {
     const img = document.createElement('img');
@@ -629,18 +693,133 @@ function buildStickerPicker() {
 
     const btn = pickButton({
       className: 'pick',
-      label: 'Sticker ' + file,
+      label: 'Dán sticker ' + file,
       content: img,
-      onPick: (b) => {
-        const i = draft.stickers.indexOf(file);
-        if (i >= 0) draft.stickers.splice(i, 1);
-        else if (draft.stickers.length < CONFIG.maxStickers) draft.stickers.push(file);
-        b.setAttribute('aria-pressed', String(draft.stickers.includes(file)));
-        if (count) count.textContent = `${draft.stickers.length}/${CONFIG.maxStickers}`;
-      },
+      onPick: () => addSticker(file),
     });
-
+    btn.removeAttribute('aria-pressed');       // nút "dán thêm", không phải ô tích
     grid.appendChild(btn);
+  });
+
+  renderPad();
+}
+
+let countTimer = 0;
+
+function updateStickerCount(msg) {
+  const el = $('#stickerCount');
+  if (!el) return;
+  clearTimeout(countTimer);
+  el.textContent = msg || `${draft.stickers.length}/${CONFIG.maxStickers}`;
+  if (msg) countTimer = setTimeout(() => updateStickerCount(), 1800);
+}
+
+function addSticker(file) {
+  if (draft.stickers.length >= CONFIG.maxStickers) {
+    updateStickerCount(`đủ ${CONFIG.maxStickers} cái rồi`);
+    return;
+  }
+
+  const item = normSticker({ file }, draft.stickers.length);
+  draft.stickers.push(item);
+  picked = item;
+  renderPad();
+}
+
+/** Đánh dấu sticker đang chọn — KHÔNG vẽ lại cả lớp, để không đứt tay kéo. */
+function pickSticker(item) {
+  picked = item;
+
+  const layer = $('#padLayer');
+  if (layer) {
+    [...layer.children].forEach((el, i) => el.classList.toggle('is-picked', draft.stickers[i] === item));
+  }
+
+  const tools = $('#padTools');
+  if (tools) tools.hidden = !item;
+}
+
+/** Kéo sticker bằng chuột hoặc ngón tay (pointer event dùng được cả hai). */
+function dragSticker(el, item) {
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    pickSticker(item);
+
+    const pad = $('#stickerPad').getBoundingClientRect();
+    const fromX = e.clientX;
+    const fromY = e.clientY;
+    const atX = item.x;
+    const atY = item.y;
+
+    const move = (ev) => {
+      item.x = clampNum(atX + ((ev.clientX - fromX) / pad.width) * 100, 2, 98);
+      item.y = clampNum(atY + ((ev.clientY - fromY) / pad.height) * 100, 3, 97);
+      applySticker(el, item);
+    };
+
+    const done = () => {
+      el.removeEventListener('pointermove', move);
+      try { el.releasePointerCapture(e.pointerId); } catch (err) { /* bỏ qua */ }
+    };
+
+    try { el.setPointerCapture(e.pointerId); } catch (err) { /* bỏ qua */ }
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', done, { once: true });
+    el.addEventListener('pointercancel', done, { once: true });
+  });
+}
+
+/** Chữ xem trước trong khung dán — gõ tới đâu thấy tới đó. */
+function renderPadText() {
+  const box = $('#padText');
+  if (!box) return;
+
+  const text = $('#wishText')?.value || '';
+  box.className = 'paperbox__text font--' + draft.font + (text ? '' : ' is-faded');
+  box.textContent = text || 'Lời chúc của bạn sẽ hiện ở đây…';
+}
+
+/** Vẽ lại khung dán: chữ + toàn bộ sticker đã dán. */
+function renderPad() {
+  const layer = $('#padLayer');
+  if (!layer) return;
+
+  renderPadText();
+  layer.textContent = '';
+
+  draft.stickers.forEach((item) => {
+    const el = stickerNode(item);
+    if (item === picked) el.classList.add('is-picked');
+    dragSticker(el, item);
+    layer.appendChild(el);
+  });
+
+  const tools = $('#padTools');
+  if (tools) tools.hidden = !picked;
+  updateStickerCount();
+}
+
+/** Nút to hơn / nhỏ đi / quay / bỏ ra cho sticker đang chọn. */
+function setupPadTools() {
+  $('#padTools')?.addEventListener('click', (e) => {
+    const act = e.target.closest('.padtool')?.dataset.act;
+    if (!act || !picked) return;
+
+    if (act === 'bigger') picked.size = clampNum(picked.size + 4, 8, 60);
+    if (act === 'smaller') picked.size = clampNum(picked.size - 4, 8, 60);
+    if (act === 'rotate') picked.rot = ((picked.rot + 15 + 180) % 360) - 180;
+    if (act === 'remove') {
+      draft.stickers = draft.stickers.filter((s) => s !== picked);
+      picked = null;
+    }
+
+    renderPad();
+  });
+
+  // bấm ra chỗ trống trong khung thì bỏ chọn
+  $('#stickerPad')?.addEventListener('pointerdown', (e) => {
+    if (e.target.classList.contains('sticker')) return;
+    pickSticker(null);
   });
 }
 
@@ -659,16 +838,18 @@ function setupWishForm() {
   buildHuePicker();
   buildFontPicker();
   buildStickerPicker();
+  setupPadTools();
 
   textArea.className = 'field__area font--' + draft.font;
 
   nameInput.addEventListener('input', () => { nameError.hidden = true; renderSealPreview(); });
-  textArea.addEventListener('input', () => { textError.hidden = true; });
+  textArea.addEventListener('input', () => { textError.hidden = true; renderPadText(); });
 
   $('#wishNewBtn')?.addEventListener('click', () => {
     status.textContent = '';
     status.className = 'form-status';
     showWishView('wishForm');
+    renderPad();
     nameInput.focus({ preventScroll: true });
   });
 
@@ -693,7 +874,7 @@ function setupWishForm() {
       font: draft.font,
       hue: draft.hue,
       icon: draft.icon,
-      stickers: [...draft.stickers],
+      stickers: draft.stickers.map((s) => ({ ...s })),
       at: new Date().toISOString(),
     };
 
@@ -709,7 +890,8 @@ function setupWishForm() {
       form.reset();
       textArea.className = 'field__area font--' + draft.font;
       draft.stickers = [];
-      buildStickerPicker();
+      picked = null;
+      renderPad();
 
       showOneWish(wish);
     } catch (err) {
