@@ -34,13 +34,15 @@ const CONFIG = {
   stickers: [
     '1.png', '2.png', '3.png', '4.png', '5.png', '6.png',
     '7.png', '8.png', '9.png', '10.png', '11.png', '12.png',
+    '13.png', '14.png', '15.png', '16.png', '17.png',
   ],
   stickerDir: '/assets/images/sticker/',
 
-  /* Nơi lưu lời chúc chung cho mọi người.
-     Để trống '' thì lời chúc chỉ nằm trong máy của người viết (chưa ai thấy được).
-     Nối xong Google Apps Script (hoặc chỗ khác) thì dán link .../exec vào đây. */
-  wishEndpoint: '',
+  /* Nơi lưu lời chúc chung cho mọi người — CÙNG một link .../exec với rsvpEndpoint ở trên.
+     Muốn dùng được thì phải dán docs/apps-script.gs vào Apps Script và Triển khai bản Mới;
+     script còn bản cũ thì trang tự biết, chỉ lưu trong máy chứ không gửi lên (khỏi ghi rác).
+     Để trống '' là tắt hẳn, lời chúc chỉ nằm trong máy người viết. */
+  wishEndpoint: 'https://script.google.com/macros/s/AKfycbwf12iQH9UoNMvTRDDgJoZ_R2FjPfVsHwSC9DMRksgtl-bH20A6oqpadhK3S4ciAkqA/exec',
 
   /* Mỗi lời chúc dán được nhiều nhất mấy sticker */
   maxStickers: 5,
@@ -251,7 +253,7 @@ const WISH_EMOJIS = ['🎓', '🌻', '⭐', '🍀', '🎈', '☕', '🐧', '🌙
 const WISH_HUES = [212, 344, 26, 142, 268, 46];
 
 let wishList = [];        // danh sách đang hiện trên trang chủ
-let stickerFiles = [];    // sticker thật sự có trong assets/images/sticker/
+let stickerFiles = CONFIG.stickers.slice();   // file nào không có thì tự bị loại khi tải
 let picked = null;        // sticker đang được chọn ở khung dán
 const draft = { icon: null, hue: WISH_HUES[0], font: 'tay', stickers: [] };
 
@@ -329,6 +331,16 @@ function jsonpGet(url, timeout = 9000) {
   });
 }
 
+/* null = chưa hỏi, true = Apps Script đã có phần lời chúc, false = còn bản cũ.
+   false thì KHÔNG gửi gì lên, khỏi ghi rác vào sheet "Trả lời" của quiz. */
+let wishEndpointReady = null;
+
+/** Bóc mảng lời chúc; trả null nếu endpoint trả về thứ khác (tức là script bản cũ). */
+function readWishData(data) {
+  const arr = Array.isArray(data) ? data : data && data.wishes;
+  return Array.isArray(arr) ? arr : null;
+}
+
 /** Danh sách lời chúc gửi về từ Google Sheet: bỏ trùng mã, mới nhất lên trước. */
 function pickWishes(data) {
   const arr = Array.isArray(data) ? data : data && data.wishes;
@@ -352,21 +364,36 @@ async function loadWishes() {
   if (!CONFIG.wishEndpoint) return pickWishes(readLocalWishes());
 
   const url = CONFIG.wishEndpoint + '?action=wishes';
+  let data = null;
 
   try {
     const res = await fetch(url, { redirect: 'follow' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    return pickWishes(await res.json());
+    data = await res.json();
   } catch (err) {
     console.warn('[WISH] fetch không đọc được, thử JSONP:', err);
+    try {
+      data = await jsonpGet(url);
+    } catch (err2) {
+      console.error('[WISH] không lấy được danh sách, tạm dùng dữ liệu trong máy:', err2);
+    }
   }
 
-  try {
-    return pickWishes(await jsonpGet(url));
-  } catch (err) {
-    console.error('[WISH] không lấy được danh sách, tạm dùng dữ liệu trong máy:', err);
-    return pickWishes(readLocalWishes());
+  const arr = readWishData(data);
+  if (arr) {
+    wishEndpointReady = true;
+    return pickWishes(arr);
   }
+
+  if (data) {
+    wishEndpointReady = false;
+    console.error(
+      '[WISH] Link wishEndpoint sống nhưng Apps Script còn là bản cũ (chưa có phần lời chúc).\n' +
+      'Dán lại docs/apps-script.gs vào Apps Script rồi Triển khai → Quản lý bản triển khai → ✏️ → Phiên bản: Mới.'
+    );
+  }
+
+  return pickWishes(readLocalWishes());
 }
 
 /** Gói lời chúc thành dữ liệu phẳng cho Google Sheet (mỗi ô một cột). */
@@ -390,7 +417,8 @@ async function sendWish(wish) {
   const all = [...readLocalWishes().filter((w) => w.id !== wish.id), wish];
   try { localStorage.setItem(WISH_KEY, JSON.stringify(all)); } catch (e) { /* bỏ qua */ }
 
-  if (!CONFIG.wishEndpoint) return;
+  // chưa cấu hình, hoặc script còn bản cũ -> chỉ giữ trong máy, không gửi lên
+  if (!CONFIG.wishEndpoint || wishEndpointReady === false) return;
   const payload = wishPayload(wish);
 
   try {
@@ -412,14 +440,16 @@ async function sendWish(wish) {
   }
 }
 
-/** Tìm xem sticker nào đã có ảnh thật (file thiếu thì bỏ khỏi danh sách). */
-function findStickers() {
-  return Promise.all(CONFIG.stickers.map((file) => new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(file);
-    img.onerror = () => resolve(null);
-    img.src = CONFIG.stickerDir + file;
-  }))).then((list) => list.filter(Boolean));
+/** Ảnh sticker, tải kiểu lazy (chỉ tải khi thật sự hiện ra màn hình).
+    File không có thì gọi onFail để chỗ gọi tự dọn, không báo lỗi gì cho khách. */
+function stickerImg(file, onFail) {
+  const img = document.createElement('img');
+  img.loading = 'lazy';
+  img.alt = '';
+  img.draggable = false;
+  if (onFail) img.addEventListener('error', () => onFail(img));
+  img.src = CONFIG.stickerDir + file;
+  return img;
 }
 
 /* --- Chuyển qua lại giữa 3 trang con của sổ lưu bút --- */
@@ -441,18 +471,19 @@ function hueFromName(name = '') {
 /** Ruột của vòng tròn con dấu: ảnh sticker, emoji, hoặc chữ cái đầu của tên. */
 function sealContent(wish) {
   const icon = wish.icon || {};
+  const chuCai = () => {
+    const span = document.createElement('span');
+    span.className = 'seal__emoji';
+    span.textContent = icon.value || (wish.name || '?').trim().charAt(0).toUpperCase();
+    return span;
+  };
 
+  // sticker mất file (bị xoá sau khi có người dùng nó) -> hiện chữ cái đầu của tên
   if (icon.type === 'sticker' && icon.value) {
-    const img = document.createElement('img');
-    img.src = CONFIG.stickerDir + icon.value;
-    img.alt = '';
-    return img;
+    return stickerImg(icon.value, (img) => img.replaceWith(chuCai()));
   }
 
-  const span = document.createElement('span');
-  span.className = 'seal__emoji';
-  span.textContent = icon.value || (wish.name || '?').trim().charAt(0).toUpperCase();
-  return span;
+  return chuCai();
 }
 
 function sealNode(wish, tilt = -3) {
@@ -562,13 +593,9 @@ function applySticker(el, item) {
 }
 
 function stickerNode(item) {
-  const img = document.createElement('img');
+  const img = stickerImg(item.file, (el) => el.remove());
   img.className = 'sticker';
-  img.src = CONFIG.stickerDir + item.file;
-  img.alt = '';
-  img.draggable = false;
   applySticker(img, item);
-  img.addEventListener('error', () => img.remove());
   return img;
 }
 
@@ -614,29 +641,29 @@ function buildIconPicker() {
   ];
 
   items.forEach((icon, i) => {
-    let content;
-    if (icon.type === 'sticker') {
-      content = document.createElement('img');
-      content.src = CONFIG.stickerDir + icon.value;
-      content.alt = '';
-    } else {
-      content = document.createTextNode(icon.value);
-    }
-
     const btn = pickButton({
       className: 'pick',
-      label: icon.type === 'sticker' ? 'Sticker ' + icon.value : icon.value,
-      content: icon.type === 'sticker' ? content : undefined,
+      label: icon.type === 'sticker' ? 'Con dấu ' + icon.value : icon.value,
       onPick: (b) => { draft.icon = icon; setPressed(grid, b); renderSealPreview(); },
     });
 
-    if (icon.type === 'emoji') btn.textContent = icon.value;
-    grid.appendChild(btn);
+    if (icon.type === 'sticker') btn.appendChild(stickerImg(icon.value, () => dropPick(btn)));
+    else btn.textContent = icon.value;
 
+    grid.appendChild(btn);
     if (i === 0) { draft.icon = icon; btn.setAttribute('aria-pressed', 'true'); }
   });
 
   renderSealPreview();
+}
+
+/** Thiếu file sticker -> bỏ ô chọn đó đi; đang chọn nó thì tự nhảy sang ô đầu còn lại. */
+function dropPick(btn) {
+  const grid = btn.parentElement;
+  const dangChon = btn.getAttribute('aria-pressed') === 'true';
+
+  btn.remove();
+  if (dangChon && grid && grid.firstElementChild) grid.firstElementChild.click();
 }
 
 function buildHuePicker() {
@@ -687,17 +714,18 @@ function buildStickerPicker() {
   grid.textContent = '';
 
   stickerFiles.forEach((file) => {
-    const img = document.createElement('img');
-    img.src = CONFIG.stickerDir + file;
-    img.alt = '';
-
     const btn = pickButton({
       className: 'pick',
       label: 'Dán sticker ' + file,
-      content: img,
       onPick: () => addSticker(file),
     });
     btn.removeAttribute('aria-pressed');       // nút "dán thêm", không phải ô tích
+
+    btn.appendChild(stickerImg(file, () => {
+      btn.remove();
+      if (!grid.children.length) field.hidden = true;   // không có ảnh nào -> ẩn cả phần này
+    }));
+
     grid.appendChild(btn);
   });
 
@@ -1064,13 +1092,6 @@ document.addEventListener('DOMContentLoaded', () => {
   buildFilm();
   setupQuiz();
   setupWishForm();
-
-  // tìm sticker có sẵn rồi dựng lại phần chọn icon / sticker
-  findStickers().then((files) => {
-    stickerFiles = files;
-    buildIconPicker();
-    buildStickerPicker();
-  });
 
   btn?.addEventListener('click', () => openInvite(gate, invite, btn));
   $('#wishBtn')?.addEventListener('click', openWish);

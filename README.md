@@ -17,9 +17,10 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
    *trang một người*, và *trang viết* (tên → chọn con dấu + màu mực → viết lời chúc, chọn 1 trong 3 kiểu chữ →
    dán sticker: bấm để dán rồi **kéo thả tự do**, có nút to hơn / nhỏ đi / quay / bỏ ra).
 
-> ⚠️ **Lời chúc chưa có nơi lưu chung.** `CONFIG.wishEndpoint` trong [js/main.js](js/main.js) đang để trống
-> nên lời chúc chỉ nằm trong máy người viết — người khác mở lên sẽ không thấy.
-> Làm 5 bước dưới đây là xong.
+> ⚠️ **Còn 1 việc: triển khai lại Apps Script.** `wishEndpoint` đã điền sẵn (cùng link `.../exec`
+> với quiz), nhưng bản Apps Script đang chạy trên Google là bản cũ — chưa biết nhận lời chúc.
+> Chưa làm 3 bước dưới thì lời chúc chỉ nằm trong máy người viết (trang tự nhận ra và
+> **không gửi gì lên**, nên không sợ ghi rác vào sheet *Trả lời*).
 
 ### Nối sổ lưu bút với Google Sheet
 
@@ -28,11 +29,11 @@ Dùng **đúng file Sheet và đúng link `.../exec`** đang nhận câu trả l
 1. Mở Google Sheet đó → **Tiện ích mở rộng → Apps Script**.
 2. Dán toàn bộ [docs/apps-script.gs](docs/apps-script.gs) vào, **thay hết code cũ** rồi Lưu.
 3. **Triển khai → Quản lý bản triển khai →** bấm bút chì ✏️ → *Phiên bản: **Mới*** → **Triển khai**.
-   (Làm cách này thì link `.../exec` giữ nguyên, không phải sửa lại quiz.)
-4. Mở `LINK_EXEC_CỦA_BẠN?action=wishes` bằng trình duyệt — phải thấy `{"ok":true,"wishes":[]}`.
-   Thấy trang báo lỗi hoặc bắt đăng nhập tức là bước 3 chưa xong.
-5. Dán chính link `.../exec` đó vào `wishEndpoint` trong [js/main.js](js/main.js)
-   (cùng một link với `rsvpEndpoint`), commit và push.
+   (Làm cách này thì link `.../exec` giữ nguyên, không phải sửa code.)
+
+Kiểm tra: mở `LINK_EXEC?action=wishes` bằng trình duyệt — phải thấy `{"ok":true,"wishes":[]}`.
+Còn thấy `{"ok":true,"message":"..."}` là bước 3 chưa xong.
+Đổi link khác thì sửa `wishEndpoint` trong [js/main.js](js/main.js), để trống `''` là tắt hẳn.
 
 Sheet sẽ tự mọc thêm tab **Lời chúc**. Muốn ẩn một lời chúc khỏi trang thì gõ chữ `x` vào cột
 **Ẩn (gõ x)** của dòng đó — không cần xoá dòng, và người viết vẫn không biết.
@@ -55,9 +56,12 @@ Khung nào chưa có ảnh thì để trống, không lỗi gì cả.
 
 ## Thêm sticker cho sổ lưu bút
 
-Bỏ ảnh vào [assets/images/sticker/](assets/images/sticker/), đặt tên `1.png`, `2.png`, … `12.png`.
+Bỏ ảnh vào [assets/images/sticker/](assets/images/sticker/), đặt tên `1.png`, `2.png`, …
+**rồi thêm tên file vào mảng `stickers`** trong [js/main.js](js/main.js) (đang khai báo 17 file).
 
-- Nên dùng **PNG nền trong suốt, khung vuông**, cỡ 240–512px mỗi chiều.
+- Nên dùng **PNG nền trong suốt, khung vuông**, cỡ **512px** mỗi chiều là dư đẹp
+  (17 sticker hiện tại = 2.4MB; ảnh 2000px thì 17 cái đã 27MB, mở trên 4G rất chậm).
+- Sticker chỉ tải khi có người mở trang viết, nên ảnh nặng không làm chậm lúc mở thiệp.
 - File nào chưa có thì trang tự bỏ qua. Chưa có file nào thì phần "Dán sticker" tự ẩn,
   và phần chọn con dấu dùng emoji thay thế.
 - Muốn thêm quá 12 sticker: viết thêm tên file vào mảng `stickers` trong [js/main.js](js/main.js).
