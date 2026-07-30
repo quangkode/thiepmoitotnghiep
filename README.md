@@ -16,9 +16,7 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
    Gồm 3 trang con: *trang chủ* (con dấu của mọi người, 3 người một dòng — bấm vào mở lời chúc của người đó),
    *trang một người*, và *trang viết* (tên → chọn con dấu + màu mực → viết lời chúc, chọn 1 trong 3 kiểu chữ →
    dán sticker: bấm để dán rồi **kéo thả tự do**, có nút to hơn / nhỏ đi / quay / bỏ ra).
-6. **Nút menu tròn** — mặt cười nhỏ ở góc dưới phải, chỉ hiện từ màn thư trở đi.
-   Chạm vào bung ra 3 trang: *Thiệp mời*, *Thư cảm ơn*, *Sổ lưu bút* — nhảy qua lại thoải mái.
-7. **Ảnh polaroid trôi ngang** ở trang chủ sổ lưu bút — lâu lâu thả một tấm, lúc sang trái lúc sang phải,
+6. **Ảnh polaroid trôi ngang** ở trang chủ sổ lưu bút — lâu lâu thả một tấm, lúc sang trái lúc sang phải,
    nằm dưới nội dung nên không che chữ. Chỉnh `floatGap` (giãn cách) và `floatMax` (số tấm cùng lúc)
    trong [js/main.js](js/main.js); để `floatMax: 0` là tắt hẳn.
 

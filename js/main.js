@@ -215,12 +215,6 @@ function openScreen(el) {
   el.classList.add('is-in');
   window.scrollTo(0, 0);
   el.focus({ preventScroll: true });
-
-  // tới được thư là coi như xong phần bắt buộc -> cho hiện nút menu
-  if (el.id === 'letter' || el.id === 'wish') {
-    const menu = $('#menu');
-    if (menu) menu.hidden = false;
-  }
 }
 
 function closeScreen(el) {
@@ -254,62 +248,6 @@ function phaoGiay(soManh = 26) {
 
   document.body.appendChild(lop);
   setTimeout(() => lop.remove(), 4500);
-}
-
-/* --------------------------------------------------------------------------
-   3a. Nút menu tròn: nhảy qua lại giữa các trang
-   -------------------------------------------------------------------------- */
-const MENU_SCREENS = { invite: '#invite', letter: '#letter', wish: '#wish' };
-
-function goToScreen(key) {
-  const target = $(MENU_SCREENS[key]);
-  if (!target) return;
-
-  ['#invite', '#quiz', '#letter', '#wish'].forEach((sel) => {
-    const el = $(sel);
-    if (el && el !== target) closeScreen(el);
-  });
-
-  document.body.classList.remove('is-locked');
-  target.classList.remove('is-out');     // thiệp từng mờ đi lúc chuyển màn
-  target.hidden = true;                  // openScreen chỉ chạy khi đang ẩn
-  openScreen(target);
-
-  if (key === 'wish') {
-    showWishView('wishHome');
-    refreshWishes();
-  } else {
-    stopFloaties();
-  }
-}
-
-function setupMenu() {
-  const menu = $('#menu');
-  const btn = $('#menuBtn');
-  if (!menu || !btn) return;
-
-  const dong = () => {
-    menu.classList.remove('is-open');
-    btn.setAttribute('aria-expanded', 'false');
-  };
-
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const mo = !menu.classList.contains('is-open');
-    menu.classList.toggle('is-open', mo);
-    btn.setAttribute('aria-expanded', String(mo));
-  });
-
-  menu.querySelectorAll('[data-go]').forEach((item) => {
-    item.addEventListener('click', () => {
-      dong();
-      goToScreen(item.dataset.go);
-    });
-  });
-
-  // chạm ra ngoài hoặc bấm Esc thì đóng lại
-  document.addEventListener('click', (e) => { if (!menu.contains(e.target)) dong(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') dong(); });
 }
 
 /* --------------------------------------------------------------------------
@@ -1342,7 +1280,6 @@ document.addEventListener('DOMContentLoaded', () => {
   buildFilm();
   setupQuiz();
   setupWishForm();
-  setupMenu();
 
   btn?.addEventListener('click', () => openInvite(gate, invite, btn));
   $('#wishBtn')?.addEventListener('click', openWish);
