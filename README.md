@@ -19,7 +19,9 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
 6. **Ảnh polaroid trôi ngang** ở trang chủ sổ lưu bút — lâu lâu thả một tấm, lúc sang trái lúc sang phải,
    nằm dưới nội dung nên không che chữ. Chỉnh `floatGap` (giãn cách) và `floatMax` (số tấm cùng lúc)
    trong [js/main.js](js/main.js); để `floatMax: 0` là tắt hẳn.
-7. **Nhạc nền** — bắt đầu từ lúc khách bấm "Ấn vào đây" (trình duyệt nào cũng cấm tự phát nhạc
+7. **Nút menu tròn** — mặt cười nhỏ ở góc dưới bên phải, chỉ hiện từ màn thư trở đi.
+   Chạm vào bung ra 3 dòng chữ: *Thiệp mời*, *Thư cảm ơn*, *Sổ lưu bút* — nhảy qua lại thoải mái.
+8. **Nhạc nền** — bắt đầu từ lúc khách bấm "Ấn vào đây" (trình duyệt nào cũng cấm tự phát nhạc
    trước khi khách chạm vào trang). Góc trên bên phải có **nút hình cái loa** — ấn là tắt tiếng,
    ấn nữa bật lại; tắt rồi thì lần sau khách vào vẫn im. Xem [assets/audio/](assets/audio/).
 

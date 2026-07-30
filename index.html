@@ -278,6 +278,27 @@
     </section>
 
     <!-- ================================================================
+         NÚT MENU TRÒN — chạm để nhảy qua lại giữa các trang.
+         Chỉ hiện sau khi khách đã trả lời quiz và đọc thư.
+         ================================================================ -->
+    <nav class="menu" id="menu" hidden>
+      <div class="menu__items" id="menuItems">
+        <button class="menu__item" type="button" data-go="invite">Thiệp mời</button>
+        <button class="menu__item" type="button" data-go="letter">Thư cảm ơn</button>
+        <button class="menu__item" type="button" data-go="wish">Sổ lưu bút</button>
+      </div>
+
+      <button
+        class="menu__toggle" type="button" id="menuBtn"
+        aria-expanded="false" aria-controls="menuItems" aria-label="Mở menu các trang">
+        <span class="menu__face" aria-hidden="true">
+          <span class="menu__eyes"><i></i><i></i></span>
+          <span class="menu__smile"></span>
+        </span>
+      </button>
+    </nav>
+
+    <!-- ================================================================
          NHẠC NỀN — bật lúc khách bấm mở thiệp (trình duyệt cấm phát trước đó).
          Nút loa nhỏ ở góc trên bên phải: ấn một cái là tắt, ấn nữa là bật lại.
          Chưa có file nhạc thì nút tự ẩn, trang vẫn chạy bình thường.

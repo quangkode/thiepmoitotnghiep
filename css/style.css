@@ -653,7 +653,8 @@ body.is-locked { overflow: hidden; height: 100svh; }
   position: relative;
   min-height: 100vh;
   min-height: 100svh;
-  padding: 26px 18px calc(34px + env(safe-area-inset-bottom)) calc(var(--spiral) + 26px);
+  /* chừa chỗ dưới cho nút menu tròn khỏi che nút Gửi lời chúc */
+  padding: 26px 18px calc(96px + env(safe-area-inset-bottom)) calc(var(--spiral) + 26px);
   background-color: #fdf9f0;
   background-image:
     /* vòng lò xo kim loại — vắt qua lỗ đục */
@@ -1119,7 +1120,114 @@ body.is-locked { overflow: hidden; height: 100svh; }
 .mute.is-off .mute__x { display: block; }
 
 /* ==========================================================================
-   5j. PHÁO GIẤY — bắn một trận lúc gửi câu trả lời và lúc gửi lời chúc
+   5j. NÚT MENU TRÒN — mặt cười nhỏ ở góc dưới, chạm ra danh sách trang
+   ========================================================================== */
+.menu {
+  position: fixed;
+  z-index: 40;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  /* bám theo mép khung thiệp 480px, ra màn hình rộng vẫn nằm trong khung */
+  right: max(14px, calc(50% - var(--frame-max-width) / 2 + 14px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* --- các trang: chỉ chữ, không icon --- */
+.menu__items {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.menu__item {
+  padding: 7px 15px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(17, 17, 17, 0.16);
+  font-family: "Patrick Hand", "Segoe Print", cursive;
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--ink);
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(12px) scale(0.6);
+  transform-origin: right center;
+  transition: opacity 0.16s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu.is-open .menu__items { pointer-events: auto; }
+.menu.is-open .menu__item { opacity: 1; transform: none; }
+.menu.is-open .menu__item:active { transform: scale(0.95); }
+.menu__item:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* nảy lên lần lượt cho vui mắt */
+.menu.is-open .menu__item:nth-child(3) { transition-delay: 0.02s; }
+.menu.is-open .menu__item:nth-child(2) { transition-delay: 0.07s; }
+.menu.is-open .menu__item:nth-child(1) { transition-delay: 0.12s; }
+
+/* --- nút mặt cười --- */
+.menu__toggle {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 2px solid var(--blue);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 5px 16px rgba(19, 96, 216, 0.24);
+  cursor: pointer;
+  animation: menu-bob 5s ease-in-out 2s infinite;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu__toggle:active { transform: scale(0.94); }
+.menu__toggle:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+.menu__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.menu__eyes { display: flex; gap: 11px; }
+
+.menu__eyes i {
+  width: 5px;
+  height: 7px;
+  border-radius: 3px;
+  background: var(--blue);
+  transform-origin: center;
+  animation: menu-blink 6s ease-in-out 3s infinite;
+}
+
+.menu__smile {
+  width: 17px;
+  height: 8px;
+  border: 2px solid var(--blue);
+  border-top: 0;
+  border-radius: 0 0 999px 999px;
+  transition: transform 0.25s ease;
+}
+
+/* mở ra thì nghiêng đầu, mắt híp lại cười */
+.menu.is-open .menu__face { transform: rotate(14deg); }
+.menu.is-open .menu__eyes i { height: 2.5px; animation: none; }
+.menu.is-open .menu__smile { transform: scale(1.15); }
+
+/* ==========================================================================
+   5k. PHÁO GIẤY — bắn một trận lúc gửi câu trả lời và lúc gửi lời chúc
    ========================================================================== */
 .confetti {
   position: fixed;
@@ -1153,6 +1261,17 @@ body.is-locked { overflow: hidden; height: 100svh; }
   0%   { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
   85%  { opacity: 1; }
   100% { opacity: 0; transform: translate3d(var(--drift, 0px), 108vh, 0) rotate(var(--spin, 360deg)); }
+}
+
+@keyframes menu-bob {
+  0%, 88%, 100% { transform: translateY(0); }
+  92%           { transform: translateY(-5px); }
+  96%           { transform: translateY(0); }
+}
+
+@keyframes menu-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95%           { transform: scaleY(0.15); }
 }
 
 /* ảnh trôi từ mép này sang mép kia, vào ra thì mờ dần, nghiêng qua nghiêng lại */
