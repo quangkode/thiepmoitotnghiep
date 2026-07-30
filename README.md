@@ -20,8 +20,8 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
    nằm dưới nội dung nên không che chữ. Chỉnh `floatGap` (giãn cách) và `floatMax` (số tấm cùng lúc)
    trong [js/main.js](js/main.js); để `floatMax: 0` là tắt hẳn.
 7. **Nhạc nền** — bắt đầu từ lúc khách bấm "Ấn vào đây" (trình duyệt nào cũng cấm tự phát nhạc
-   trước khi khách chạm vào trang). Góc trên bên phải có nút ba vạch nhún nhảy để tắt / bật,
-   tắt rồi thì lần sau khách vào vẫn im. Xem [assets/audio/](assets/audio/).
+   trước khi khách chạm vào trang). Góc trên bên phải có **nút hình cái loa** — ấn là tắt tiếng,
+   ấn nữa bật lại; tắt rồi thì lần sau khách vào vẫn im. Xem [assets/audio/](assets/audio/).
 
 ## Nhạc nền
 

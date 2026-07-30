@@ -239,7 +239,7 @@ function batNhac() {
   });
 }
 
-/** Ba vạch nhún nhảy khi đang hát, nằm im khi tắt. */
+/** Loa có sóng khi đang hát, loa xám gạch chéo khi tắt. */
 function veNutNhac() {
   if (!muteBtn) return;
   const dangHat = !!bgm && !bgm.paused && !nhacTat;

@@ -279,13 +279,23 @@
 
     <!-- ================================================================
          NHẠC NỀN — bật lúc khách bấm mở thiệp (trình duyệt cấm phát trước đó).
-         Nút ba vạch nhún nhảy ở góc trên bên phải để tắt / bật lại.
+         Nút loa nhỏ ở góc trên bên phải: ấn một cái là tắt, ấn nữa là bật lại.
          Chưa có file nhạc thì nút tự ẩn, trang vẫn chạy bình thường.
          ================================================================ -->
     <audio id="bgm" loop preload="none"></audio>
     <button class="mute" id="muteBtn" type="button" hidden
             aria-pressed="false" aria-label="Tắt nhạc" title="Tắt nhạc">
-      <span class="mute__eq" aria-hidden="true"><i></i><i></i><i></i></span>
+      <svg class="mute__icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path class="mute__body" d="M4 9.3h3.3L12 5v14l-4.7-4.3H4z" />
+        <g class="mute__waves">
+          <path d="M15.1 9.7a3.3 3.3 0 0 1 0 4.6" />
+          <path d="M17.7 7.4a6.8 6.8 0 0 1 0 9.2" />
+        </g>
+        <g class="mute__x">
+          <path d="M15.6 9.8l4.8 4.4" />
+          <path d="M20.4 9.8l-4.8 4.4" />
+        </g>
+      </svg>
     </button>
 
   </div>

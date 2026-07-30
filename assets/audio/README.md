@@ -14,4 +14,5 @@ không thì trình duyệt khách vẫn phát bản cũ đã nhớ.
 
 Nhạc **không tự phát** ngay khi mở trang — mọi trình duyệt đều cấm.
 Nó bắt đầu từ lúc khách bấm "Ấn vào đây" ở màn cổng.
-Góc trên bên phải có nút ba vạch để tắt / bật lại, tắt rồi thì lần sau vào vẫn nhớ là tắt.
+Góc trên bên phải có nút hình cái loa: ấn một cái là tắt tiếng (loa xám, gạch chéo),
+ấn nữa là bật lại. Tắt rồi thì lần sau khách vào vẫn nhớ là tắt.
