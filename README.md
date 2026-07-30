@@ -12,7 +12,30 @@ Trang web thiệp mời, dạng **dọc, tối ưu cho điện thoại**. Static
    đọc hai lá thư khác nhau. Bên phải là dải phim ảnh tự trôi lên không ngừng.
    Lần sau khách mở lại thì vào thẳng thư này (một chiều, không sửa lại câu trả lời được).
    Cuối thư có nút **Để lại lời chúc**.
-5. **Màn lời chúc** — bấm nút ở cuối thư thì mở màn này (màn duy nhất cuộn được). *Đang làm tiếp.*
+5. **Sổ lưu bút** — bấm nút ở cuối thư thì mở màn này (màn duy nhất cuộn được), nền là trang vở lò xo.
+   Gồm 3 trang con: *trang chủ* (con dấu của mọi người, 3 người một dòng — bấm vào mở lời chúc của người đó),
+   *trang một người*, và *trang viết* (tên → chọn con dấu + màu mực → viết lời chúc, chọn 1 trong 3 kiểu chữ → dán sticker).
+
+> ⚠️ **Lời chúc chưa có nơi lưu chung.** `CONFIG.wishEndpoint` trong [js/main.js](js/main.js) đang để trống
+> nên lời chúc chỉ nằm trong máy người viết — người khác mở lên sẽ không thấy.
+> Làm 5 bước dưới đây là xong.
+
+### Nối sổ lưu bút với Google Sheet
+
+Dùng **đúng file Sheet và đúng link `.../exec`** đang nhận câu trả lời quiz, không cần tạo cái mới.
+
+1. Mở Google Sheet đó → **Tiện ích mở rộng → Apps Script**.
+2. Dán toàn bộ [docs/apps-script.gs](docs/apps-script.gs) vào, **thay hết code cũ** rồi Lưu.
+3. **Triển khai → Quản lý bản triển khai →** bấm bút chì ✏️ → *Phiên bản: **Mới*** → **Triển khai**.
+   (Làm cách này thì link `.../exec` giữ nguyên, không phải sửa lại quiz.)
+4. Mở `LINK_EXEC_CỦA_BẠN?action=wishes` bằng trình duyệt — phải thấy `{"ok":true,"wishes":[]}`.
+   Thấy trang báo lỗi hoặc bắt đăng nhập tức là bước 3 chưa xong.
+5. Dán chính link `.../exec` đó vào `wishEndpoint` trong [js/main.js](js/main.js)
+   (cùng một link với `rsvpEndpoint`), commit và push.
+
+Sheet sẽ tự mọc thêm tab **Lời chúc**. Muốn ẩn một lời chúc khỏi trang thì gõ chữ `x` vào cột
+**Ẩn (gõ x)** của dòng đó — không cần xoá dòng, và người viết vẫn không biết.
+Sửa tên hoặc nội dung ngay trong Sheet cũng được, trang sẽ hiện theo Sheet.
 
 ### Bỏ ảnh chữ ký vào thư
 
@@ -28,6 +51,16 @@ Khung nào chưa có ảnh thì để trống, không lỗi gì cả.
 - Muốn nhiều/ít ảnh hơn hoặc đổi tên file: sửa mảng `photos` trong [js/main.js](js/main.js).
 - Muốn phim chạy nhanh/chậm: sửa `48s` ở `animation: film-roll` trong [css/style.css](css/style.css).
 - Muốn dải phim to/nhỏ hơn: sửa `flex: 0 0 clamp(104px, 35%, 160px)` ở `.film` trong [css/style.css](css/style.css).
+
+## Thêm sticker cho sổ lưu bút
+
+Bỏ ảnh vào [assets/images/sticker/](assets/images/sticker/), đặt tên `1.png`, `2.png`, … `12.png`.
+
+- Nên dùng **PNG nền trong suốt, khung vuông**, cỡ 240–512px mỗi chiều.
+- File nào chưa có thì trang tự bỏ qua. Chưa có file nào thì phần "Dán sticker" tự ẩn,
+  và phần chọn con dấu dùng emoji thay thế.
+- Muốn thêm quá 12 sticker: viết thêm tên file vào mảng `stickers` trong [js/main.js](js/main.js).
+- Muốn cho dán nhiều hơn 3 sticker mỗi lời chúc: sửa `maxStickers`.
 
 ## Sửa lời thư
 

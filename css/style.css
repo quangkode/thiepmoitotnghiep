@@ -640,27 +640,52 @@ body.is-locked { overflow: hidden; height: 100svh; }
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* ---------- 5e. Màn để lại lời chúc (màn duy nhất cuộn được) ---------- */
+/* ==========================================================================
+   5e. MÀN SỔ LƯU BÚT — nền quyển vở lò xo (màn duy nhất cuộn được)
+   ========================================================================== */
+:root {
+  --spiral: 42px;            /* bề ngang dải lò xo bên trái */
+  --rule-gap: 30px;          /* khoảng cách hai dòng kẻ */
+  --note-ink: #2b2f3a;
+}
+
 .wish {
   position: relative;
   min-height: 100vh;
   min-height: 100svh;
-  padding: 9vh var(--pad-x) calc(9vh + env(safe-area-inset-bottom));
-  background: var(--paper);
+  padding: 26px 18px calc(46px + env(safe-area-inset-bottom)) calc(var(--spiral) + 26px);
+  background-color: #fdf9f0;
+  background-image:
+    /* vòng lò xo kim loại — vắt qua lỗ đục */
+    radial-gradient(ellipse 16px 4.5px at 18px 22px,
+      #ffffff 0 14%, #d2cfc8 14% 46%, #8b8882 46% 74%, #c4c1bb 74% 100%, transparent 100%),
+    /* lỗ đục trên giấy */
+    radial-gradient(ellipse 6.5px 4.5px at 31px 22px,
+      rgba(40, 34, 26, 0.5) 0 58%, rgba(40, 34, 26, 0.12) 58% 100%, transparent 100%),
+    /* dòng kẻ ngang (chỉ bên phải dải lò xo) */
+    repeating-linear-gradient(to bottom,
+      transparent 0 calc(var(--rule-gap) - 1px), #c9e0ef calc(var(--rule-gap) - 1px) var(--rule-gap)),
+    /* lề đỏ */
+    linear-gradient(#f0b6b6, #f0b6b6),
+    /* vệt tối ở mép gáy vở */
+    linear-gradient(to right, rgba(90, 74, 48, 0.14), rgba(90, 74, 48, 0) 100%);
+  background-size:
+    var(--spiral) 44px,
+    var(--spiral) 44px,
+    calc(100% - var(--spiral)) 100%,
+    1.5px 100%,
+    22px 100%;
+  background-position: 0 4px, 0 4px, var(--spiral) 0, calc(var(--spiral) + 14px) 0, var(--spiral) 0;
+  background-repeat: repeat-y, repeat-y, no-repeat, no-repeat, no-repeat;
 }
 
 .wish.is-in { animation: fade-up 0.6s ease both; }
 .wish:focus { outline: none; }
 
-.wish__inner {
-  width: 100%;
-  max-width: 400px;
-  margin-inline: auto;
-  text-align: center;
-}
+.wish__view { position: relative; }
 
 .wish__eyebrow {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -668,19 +693,277 @@ body.is-locked { overflow: hidden; height: 100svh; }
 }
 
 .wish__title {
-  margin-top: 8px;
-  font-family: "Dancing Script", "Segoe Script", cursive;
-  font-weight: 700;
-  font-size: clamp(30px, 9vw, 40px);
-  line-height: 1.2;
-  text-wrap: balance;
+  margin-top: 4px;
+  font-family: "Patrick Hand", "Segoe Print", cursive;
+  font-weight: 400;                    /* Patrick Hand chỉ có 1 nét, đậm thêm là bị nhoè */
+  font-size: clamp(31px, 9.4vw, 40px);
+  line-height: 1.18;
+  color: var(--note-ink);
 }
 
-.wish__lead {
-  margin-top: 10px;
-  font-size: 14.5px;
-  color: rgba(17, 17, 17, 0.68);
+.wish__new {
+  margin-top: 16px;
+  padding: 12px 20px;
+  font-size: 14px;
 }
+
+.wish__empty {
+  margin-top: 26px;
+  font-size: 14px;
+  line-height: var(--rule-gap);
+  color: rgba(17, 17, 17, 0.45);
+}
+
+.wish__back {
+  margin-bottom: 14px;
+  padding: 7px 14px 7px 10px;
+  border: 1.5px solid rgba(17, 17, 17, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  color: rgba(17, 17, 17, 0.6);
+  cursor: pointer;
+}
+
+.wish__back::before { content: "←"; margin-right: 6px; }
+
+/* ---------- 5f. Con dấu: 3 người một dòng ---------- */
+.stamps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px 8px;
+  margin-top: 26px;
+}
+
+.stamp__btn {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* vòng tròn như con dấu mực: hai viền, hơi lệch trục cho ra dáng đóng tay */
+.stamp__seal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 2px solid hsl(var(--hue, 212) 62% 46% / 0.75);
+  border-radius: 50%;
+  background: hsl(var(--hue, 212) 70% 96% / 0.75);
+  transform: rotate(var(--tilt, -3deg));
+  transition: transform 0.18s ease;
+}
+
+.stamp__seal::after {                 /* viền trong nét đứt */
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1.5px dashed hsl(var(--hue, 212) 55% 48% / 0.4);
+  border-radius: 50%;
+}
+
+.stamp__seal img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+
+.seal__emoji {
+  font-size: clamp(24px, 8vw, 34px);
+  line-height: 1;
+}
+
+.stamp__name {
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(17, 17, 17, 0.72);
+  overflow-wrap: anywhere;
+}
+
+.stamp__btn:active .stamp__seal { transform: rotate(var(--tilt, -3deg)) scale(0.94); }
+.stamp__btn:focus-visible .stamp__seal { outline: 2px solid var(--blue); outline-offset: 3px; }
+
+/* ---------- 5g. Trang lời chúc của một người ---------- */
+.note__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.note__seal {
+  flex: 0 0 62px;
+  width: 62px;
+}
+
+.note__who { min-width: 0; }
+
+.note__name {
+  font-family: "Patrick Hand", "Segoe Print", cursive;
+  font-weight: 400;
+  font-size: 27px;
+  line-height: 1.15;
+  color: var(--note-ink);
+  overflow-wrap: anywhere;
+}
+
+.note__date {
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: rgba(17, 17, 17, 0.42);
+}
+
+.note__text {
+  margin-top: 18px;
+  font-size: 15px;
+  line-height: var(--rule-gap);        /* chữ nằm đúng trên dòng kẻ */
+  color: var(--note-ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 3 kiểu chữ khách chọn — dùng cho cả ô nhập lẫn lời chúc đã gửi */
+.font--tay { font-family: "Patrick Hand", "Segoe Print", cursive; }
+.font--bay { font-family: "Dancing Script", "Segoe Script", cursive; font-weight: 600; }
+
+.note__text.font--tay { font-size: 19.5px; }
+.note__text.font--bay { font-size: 19px; }
+.field__area.font--tay { font-size: 19px; }
+.field__area.font--bay { font-size: 18px; }
+
+.note__stickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.note__stickers img {
+  width: clamp(56px, 22%, 84px);
+  height: auto;
+  filter: drop-shadow(0 3px 5px rgba(17, 17, 17, 0.16));
+}
+
+.note__stickers img:nth-child(odd) { transform: rotate(-7deg); }
+.note__stickers img:nth-child(even) { transform: rotate(6deg); }
+
+/* ---------- 5h. Trang viết lời chúc ---------- */
+.wishform {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.field__hint {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: rgba(17, 17, 17, 0.42);
+}
+
+.field__area {
+  width: 100%;
+  padding: 12px 12px;
+  border: 1.5px solid rgba(17, 17, 17, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  font-size: 16px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.field__area:focus { outline: none; border-color: var(--blue); }
+.field__area::placeholder { color: rgba(17, 17, 17, 0.32); }
+
+/* --- xem trước con dấu --- */
+.sealprev {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sealprev .stamp__seal {
+  flex: 0 0 66px;
+  width: 66px;
+}
+
+.sealprev__hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.45);
+}
+
+/* --- ô chọn icon / sticker --- */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 8px;
+}
+
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 4px;
+  border: 1.5px solid rgba(17, 17, 17, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pick img { width: 100%; height: 100%; object-fit: contain; }
+.pick[aria-pressed="true"] { border-color: var(--blue); background: rgba(19, 96, 216, 0.09); }
+.pick:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.picker--sticker .pick { font-size: 20px; }
+
+/* --- màu mực con dấu --- */
+.hues { display: flex; gap: 10px; margin-top: 12px; }
+
+.hue {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: hsl(var(--hue) 62% 52%);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hue[aria-pressed="true"] { border-color: var(--ink); }
+.hue:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* --- chọn kiểu chữ --- */
+.fonts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.fontpick {
+  padding: 7px 14px;
+  border: 1.5px solid rgba(17, 17, 17, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fontpick--tay { font-family: "Patrick Hand", "Segoe Print", cursive; font-size: 18px; }
+.fontpick--bay { font-family: "Dancing Script", "Segoe Script", cursive; font-size: 17px; }
+.fontpick[aria-pressed="true"] { border-color: var(--blue); background: rgba(19, 96, 216, 0.09); color: var(--blue); }
+.fontpick:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
 /* ---------- 6. Chuyển động ---------- */
 @keyframes draw-circle {

@@ -27,6 +27,21 @@ const CONFIG = {
      Chưa có file thì khung hiện chỗ trống, không lỗi gì cả. */
   photos: ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg'],
   photoDir: '/assets/images/photos/',
+
+  /* Sticker cho sổ lưu bút — bỏ ảnh vào assets/images/sticker/ đúng tên này
+     (nên dùng .png nền trong suốt, vuông, cỡ 240–512px).
+     File nào chưa có thì tự bỏ qua, muốn thêm thì viết thêm tên vào mảng. */
+  stickers: [
+    '1.png', '2.png', '3.png', '4.png', '5.png', '6.png',
+    '7.png', '8.png', '9.png', '10.png', '11.png', '12.png',
+  ],
+  stickerDir: '/assets/images/sticker/',
+
+  /* Nơi lưu lời chúc chung cho mọi người.
+     Để trống '' thì lời chúc chỉ nằm trong máy của người viết (chưa ai thấy được).
+     Nối xong Google Apps Script (hoặc chỗ khác) thì dán link .../exec vào đây. */
+  wishEndpoint: '',
+  maxStickers: 3,
 };
 
 /* ==========================================================================
@@ -175,15 +190,16 @@ function fillLetter(answer) {
   $('#letterBody').innerHTML = tpl.paragraphs.map((p) => `<p>${fill(p)}</p>`).join('');
 }
 
-/** Sang màn để lại lời chúc (màn này cuộn được, không quay lại thư nữa). */
-function openWish() {
-  const letter = $('#letter');
+/** Sang màn sổ lưu bút (màn này cuộn được, không quay lại thư nữa). */
+async function openWish() {
   const wish = $('#wish');
   if (!wish) return;
 
-  closeScreen(letter);
+  closeScreen($('#letter'));
   document.body.classList.remove('is-locked');
   openScreen(wish);
+  showWishView('wishHome');
+  await refreshWishes();
 }
 
 /** Dựng cuộn phim: nhân đôi danh sách ảnh để chạy vòng lặp không thấy mối nối. */
@@ -212,6 +228,498 @@ function buildFilm() {
   }
 
   track.appendChild(frag);
+}
+
+/* ==========================================================================
+   3d. SỔ LƯU BÚT — lời chúc của mọi người
+   ========================================================================== */
+const WISH_KEY = 'wishes:tran-minh-quang';
+
+/* Kiểu chữ cho khách chọn (khớp với .font--* trong style.css) */
+const WISH_FONTS = [
+  { id: 'gon', label: 'Gọn gàng' },
+  { id: 'tay', label: 'Viết tay' },
+  { id: 'bay', label: 'Bay bổng' },
+];
+
+/* Icon dùng khi thư mục sticker chưa có ảnh nào */
+const WISH_EMOJIS = ['🎓', '🌻', '⭐', '🍀', '🎈', '☕', '🐧', '🌙', '🍉', '🧸', '🌊', '🐣'];
+
+/* Màu mực con dấu (giá trị hue của hsl) */
+const WISH_HUES = [212, 344, 26, 142, 268, 46];
+
+let wishList = [];        // danh sách đang hiện trên trang chủ
+let stickerFiles = [];    // sticker thật sự có trong assets/images/sticker/
+const draft = { icon: null, hue: WISH_HUES[0], font: 'tay', stickers: [] };
+
+/** Lời chúc lưu trong máy khách — dùng khi chưa nối nơi lưu chung. */
+function readLocalWishes() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(WISH_KEY) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/** Gọi endpoint kiểu JSONP — dùng khi fetch bị CORS chặn (hay gặp với Apps Script). */
+function jsonpGet(url, timeout = 9000) {
+  return new Promise((resolve, reject) => {
+    const name = 'wishCb' + Math.random().toString(36).slice(2, 9);
+    const script = document.createElement('script');
+
+    const clean = () => {
+      clearTimeout(timer);
+      delete window[name];
+      script.remove();
+    };
+    const timer = setTimeout(() => { clean(); reject(new Error('JSONP hết giờ')); }, timeout);
+
+    window[name] = (data) => { clean(); resolve(data); };
+    script.onerror = () => { clean(); reject(new Error('JSONP lỗi')); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + name;
+    document.head.appendChild(script);
+  });
+}
+
+/** Danh sách lời chúc gửi về từ Google Sheet: bỏ trùng mã, mới nhất lên trước. */
+function pickWishes(data) {
+  const arr = Array.isArray(data) ? data : data && data.wishes;
+  if (!Array.isArray(arr)) return [];
+
+  const seen = new Set();
+  const out = [];
+
+  arr.forEach((w) => {
+    if (!w || !w.name || seen.has(w.id)) return;
+    seen.add(w.id);
+    out.push(w);
+  });
+
+  return out.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+}
+
+/** Lấy danh sách lời chúc để hiện lên trang chủ.
+    Chưa có CONFIG.wishEndpoint thì chỉ đọc trong máy khách. */
+async function loadWishes() {
+  if (!CONFIG.wishEndpoint) return pickWishes(readLocalWishes());
+
+  const url = CONFIG.wishEndpoint + '?action=wishes';
+
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return pickWishes(await res.json());
+  } catch (err) {
+    console.warn('[WISH] fetch không đọc được, thử JSONP:', err);
+  }
+
+  try {
+    return pickWishes(await jsonpGet(url));
+  } catch (err) {
+    console.error('[WISH] không lấy được danh sách, tạm dùng dữ liệu trong máy:', err);
+    return pickWishes(readLocalWishes());
+  }
+}
+
+/** Gói lời chúc thành dữ liệu phẳng cho Google Sheet (mỗi ô một cột). */
+function wishPayload(wish) {
+  const icon = wish.icon || {};
+  return {
+    action: 'wish',
+    id: wish.id,
+    name: wish.name,
+    text: wish.text,
+    font: wish.font,
+    hue: String(wish.hue),
+    icon: (icon.type || 'emoji') + ':' + (icon.value || ''),
+    stickers: (wish.stickers || []).join(','),
+    at: wish.at,
+  };
+}
+
+/** Lưu một lời chúc: luôn giữ trong máy, có endpoint thì gửi lên chỗ chung. */
+async function sendWish(wish) {
+  const all = [...readLocalWishes().filter((w) => w.id !== wish.id), wish];
+  try { localStorage.setItem(WISH_KEY, JSON.stringify(all)); } catch (e) { /* bỏ qua */ }
+
+  if (!CONFIG.wishEndpoint) return;
+  const payload = wishPayload(wish);
+
+  try {
+    // text/plain -> trình duyệt gửi thẳng, không cần preflight CORS
+    const res = await fetch(CONFIG.wishEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  } catch (err) {
+    // Dự phòng: gửi "mù" (không đọc được kết quả nhưng dữ liệu vẫn tới nơi)
+    await fetch(CONFIG.wishEndpoint, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: new URLSearchParams(payload),
+    });
+  }
+}
+
+/** Tìm xem sticker nào đã có ảnh thật (file thiếu thì bỏ khỏi danh sách). */
+function findStickers() {
+  return Promise.all(CONFIG.stickers.map((file) => new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(file);
+    img.onerror = () => resolve(null);
+    img.src = CONFIG.stickerDir + file;
+  }))).then((list) => list.filter(Boolean));
+}
+
+/* --- Chuyển qua lại giữa 3 trang con của sổ lưu bút --- */
+function showWishView(id) {
+  ['wishHome', 'wishOne', 'wishForm'].forEach((v) => {
+    const el = $('#' + v);
+    if (el) el.hidden = v !== id;
+  });
+  window.scrollTo(0, 0);
+}
+
+/** Màu mực mặc định suy ra từ tên -> mỗi người một màu, không cần lưu thêm. */
+function hueFromName(name = '') {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return WISH_HUES[h % WISH_HUES.length];
+}
+
+/** Ruột của vòng tròn con dấu: ảnh sticker, emoji, hoặc chữ cái đầu của tên. */
+function sealContent(wish) {
+  const icon = wish.icon || {};
+
+  if (icon.type === 'sticker' && icon.value) {
+    const img = document.createElement('img');
+    img.src = CONFIG.stickerDir + icon.value;
+    img.alt = '';
+    return img;
+  }
+
+  const span = document.createElement('span');
+  span.className = 'seal__emoji';
+  span.textContent = icon.value || (wish.name || '?').trim().charAt(0).toUpperCase();
+  return span;
+}
+
+function sealNode(wish, tilt = -3) {
+  const seal = document.createElement('span');
+  seal.className = 'stamp__seal';
+  seal.style.setProperty('--hue', wish.hue ?? hueFromName(wish.name));
+  seal.style.setProperty('--tilt', tilt + 'deg');
+  seal.appendChild(sealContent(wish));
+  return seal;
+}
+
+/** Vẽ lưới con dấu ở trang chủ — 3 người một dòng (grid trong style.css). */
+function renderStamps() {
+  const list = $('#stampList');
+  const empty = $('#wishEmpty');
+  if (!list) return;
+
+  list.textContent = '';
+  if (empty) empty.hidden = wishList.length > 0;
+
+  wishList.forEach((wish, i) => {
+    const li = document.createElement('li');
+    li.className = 'stamp';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'stamp__btn';
+
+    const name = document.createElement('span');
+    name.className = 'stamp__name';
+    name.textContent = wish.name || 'Ẩn danh';
+
+    btn.appendChild(sealNode(wish, ((i % 5) - 2) * 2.6));
+    btn.appendChild(name);
+    btn.addEventListener('click', () => showOneWish(wish));
+
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
+}
+
+async function refreshWishes() {
+  wishList = await loadWishes();
+  renderStamps();
+}
+
+/** Mở trang lời chúc của một người. */
+function showOneWish(wish) {
+  const box = $('#noteBox');
+  if (!box) return;
+  box.textContent = '';
+
+  const head = document.createElement('div');
+  head.className = 'note__head';
+
+  const seal = sealNode(wish, -4);
+  seal.classList.add('note__seal');
+
+  const who = document.createElement('div');
+  who.className = 'note__who';
+
+  const name = document.createElement('p');
+  name.className = 'note__name';
+  name.textContent = wish.name || 'Ẩn danh';
+  who.appendChild(name);
+
+  if (wish.at) {
+    const date = document.createElement('p');
+    date.className = 'note__date';
+    const d = new Date(wish.at);
+    if (!isNaN(d)) date.textContent = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    who.appendChild(date);
+  }
+
+  head.appendChild(seal);
+  head.appendChild(who);
+
+  const text = document.createElement('div');
+  text.className = 'note__text font--' + (wish.font || 'tay');
+  text.textContent = wish.text || '';
+
+  box.appendChild(head);
+  box.appendChild(text);
+
+  const files = (wish.stickers || []).filter(Boolean);
+  if (files.length) {
+    const row = document.createElement('div');
+    row.className = 'note__stickers';
+    files.forEach((file) => {
+      const img = document.createElement('img');
+      img.src = CONFIG.stickerDir + file;
+      img.alt = '';
+      img.addEventListener('error', () => img.remove());
+      row.appendChild(img);
+    });
+    box.appendChild(row);
+  }
+
+  showWishView('wishOne');
+}
+
+/* --------------------------------------------------------------------------
+   3e. Trang viết lời chúc
+   -------------------------------------------------------------------------- */
+/** Nút chọn (icon / sticker / màu / kiểu chữ) — kiểu bấm là tích, bấm lại là bỏ. */
+function pickButton({ className, label, onPick, content }) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = className;
+  btn.setAttribute('aria-pressed', 'false');
+  if (label) btn.setAttribute('aria-label', label);
+  if (content) btn.appendChild(content);
+  btn.addEventListener('click', () => onPick(btn));
+  return btn;
+}
+
+function setPressed(group, chosen) {
+  [...group.children].forEach((b) => b.setAttribute('aria-pressed', String(b === chosen)));
+}
+
+/** Vòng tròn xem trước con dấu ở trang viết — đổi theo icon / màu / tên đang chọn. */
+function renderSealPreview() {
+  const box = $('#sealPrev');
+  if (!box) return;
+  box.textContent = '';
+  box.appendChild(sealNode({
+    name: $('#wishName')?.value || '',
+    icon: draft.icon,
+    hue: draft.hue,
+  }, -4));
+}
+
+function buildIconPicker() {
+  const grid = $('#iconGrid');
+  if (!grid) return;
+  grid.textContent = '';
+
+  const items = [
+    ...stickerFiles.map((file) => ({ type: 'sticker', value: file })),
+    ...WISH_EMOJIS.map((e) => ({ type: 'emoji', value: e })),
+  ];
+
+  items.forEach((icon, i) => {
+    let content;
+    if (icon.type === 'sticker') {
+      content = document.createElement('img');
+      content.src = CONFIG.stickerDir + icon.value;
+      content.alt = '';
+    } else {
+      content = document.createTextNode(icon.value);
+    }
+
+    const btn = pickButton({
+      className: 'pick',
+      label: icon.type === 'sticker' ? 'Sticker ' + icon.value : icon.value,
+      content: icon.type === 'sticker' ? content : undefined,
+      onPick: (b) => { draft.icon = icon; setPressed(grid, b); renderSealPreview(); },
+    });
+
+    if (icon.type === 'emoji') btn.textContent = icon.value;
+    grid.appendChild(btn);
+
+    if (i === 0) { draft.icon = icon; btn.setAttribute('aria-pressed', 'true'); }
+  });
+
+  renderSealPreview();
+}
+
+function buildHuePicker() {
+  const row = $('#hueRow');
+  if (!row) return;
+  row.textContent = '';
+
+  WISH_HUES.forEach((hue, i) => {
+    const btn = pickButton({
+      className: 'hue',
+      label: 'Màu mực ' + (i + 1),
+      onPick: (b) => { draft.hue = hue; setPressed(row, b); renderSealPreview(); },
+    });
+    btn.style.setProperty('--hue', hue);
+    if (i === 0) btn.setAttribute('aria-pressed', 'true');
+    row.appendChild(btn);
+  });
+}
+
+function buildFontPicker() {
+  const row = $('#fontRow');
+  const area = $('#wishText');
+  if (!row) return;
+  row.textContent = '';
+
+  WISH_FONTS.forEach((font) => {
+    const btn = pickButton({
+      className: 'fontpick fontpick--' + font.id,
+      onPick: (b) => {
+        draft.font = font.id;
+        setPressed(row, b);
+        if (area) area.className = 'field__area font--' + font.id;
+      },
+    });
+    btn.textContent = font.label;
+    if (font.id === draft.font) btn.setAttribute('aria-pressed', 'true');
+    row.appendChild(btn);
+  });
+}
+
+function buildStickerPicker() {
+  const field = $('#stickerField');
+  const grid = $('#stickerGrid');
+  const count = $('#stickerCount');
+  if (!field || !grid) return;
+
+  field.hidden = stickerFiles.length === 0;   // chưa có ảnh thì ẩn hẳn phần này
+  grid.textContent = '';
+  if (count) count.textContent = `chọn tối đa ${CONFIG.maxStickers}`;
+
+  stickerFiles.forEach((file) => {
+    const img = document.createElement('img');
+    img.src = CONFIG.stickerDir + file;
+    img.alt = '';
+
+    const btn = pickButton({
+      className: 'pick',
+      label: 'Sticker ' + file,
+      content: img,
+      onPick: (b) => {
+        const i = draft.stickers.indexOf(file);
+        if (i >= 0) draft.stickers.splice(i, 1);
+        else if (draft.stickers.length < CONFIG.maxStickers) draft.stickers.push(file);
+        b.setAttribute('aria-pressed', String(draft.stickers.includes(file)));
+        if (count) count.textContent = `${draft.stickers.length}/${CONFIG.maxStickers}`;
+      },
+    });
+
+    grid.appendChild(btn);
+  });
+}
+
+function setupWishForm() {
+  const form = $('#wishFormEl');
+  if (!form) return;
+
+  const nameInput = $('#wishName');
+  const textArea = $('#wishText');
+  const nameError = $('#wishNameError');
+  const textError = $('#wishTextError');
+  const status = $('#wishStatus');
+  const submitBtn = $('#wishSubmit');
+
+  buildIconPicker();
+  buildHuePicker();
+  buildFontPicker();
+  buildStickerPicker();
+
+  textArea.className = 'field__area font--' + draft.font;
+
+  nameInput.addEventListener('input', () => { nameError.hidden = true; renderSealPreview(); });
+  textArea.addEventListener('input', () => { textError.hidden = true; });
+
+  $('#wishNewBtn')?.addEventListener('click', () => {
+    status.textContent = '';
+    status.className = 'form-status';
+    showWishView('wishForm');
+    nameInput.focus({ preventScroll: true });
+  });
+
+  $('#wishBackBtn')?.addEventListener('click', () => showWishView('wishHome'));
+  $('#formBackBtn')?.addEventListener('click', () => showWishView('wishHome'));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = nameInput.value.trim();
+    const text = textArea.value.trim();
+
+    nameError.hidden = !!name;
+    textError.hidden = !!text;
+    if (!name) { nameInput.focus(); return; }
+    if (!text) { textArea.focus(); return; }
+
+    const wish = {
+      id: 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name,
+      text,
+      font: draft.font,
+      hue: draft.hue,
+      icon: draft.icon,
+      stickers: [...draft.stickers],
+      at: new Date().toISOString(),
+    };
+
+    submitBtn.disabled = true;
+    status.className = 'form-status';
+    status.textContent = 'Đang gửi…';
+
+    try {
+      await sendWish(wish);
+      wishList = [wish, ...wishList.filter((w) => w.id !== wish.id)];
+      renderStamps();
+
+      form.reset();
+      textArea.className = 'field__area font--' + draft.font;
+      draft.stickers = [];
+      buildStickerPicker();
+
+      showOneWish(wish);
+    } catch (err) {
+      status.className = 'form-status is-error';
+      status.textContent = 'Chưa gửi được. Bạn thử lại giúp mình nhé!';
+      console.error('[WISH]', err);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
 }
 
 /* --------------------------------------------------------------------------
@@ -373,6 +881,14 @@ document.addEventListener('DOMContentLoaded', () => {
   spawnQuestionMarks($('#questions'));
   buildFilm();
   setupQuiz();
+  setupWishForm();
+
+  // tìm sticker có sẵn rồi dựng lại phần chọn icon / sticker
+  findStickers().then((files) => {
+    stickerFiles = files;
+    buildIconPicker();
+    buildStickerPicker();
+  });
 
   btn?.addEventListener('click', () => openInvite(gate, invite, btn));
   $('#wishBtn')?.addEventListener('click', openWish);

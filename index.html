@@ -20,7 +20,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Dancing+Script:wght@600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="/css/style.css" />
 </head>
@@ -175,19 +175,87 @@
     </section>
 
     <!-- ================================================================
-         MÀN 5 — ĐỂ LẠI LỜI CHÚC (màn này cuộn được)
+         MÀN 5 — SỔ LƯU BÚT (nền quyển vở, màn duy nhất cuộn được)
+         Gồm 3 trang con: danh sách con dấu / lời chúc một người / trang viết
          ================================================================ -->
     <section class="wish" id="wish" tabindex="-1" hidden>
-      <div class="wish__inner">
-        <p class="wish__eyebrow">Lời chúc</p>
-        <h2 class="wish__title">Viết cho mình vài dòng nhé</h2>
-        <p class="wish__lead">
-          Một câu thôi cũng được — mình sẽ giữ lại hết.
-        </p>
 
-        <!-- ==== CHỖ LÀM TIẾP: nội dung màn lời chúc thêm vào đây ==== -->
-        <div class="wish__slot" id="wishSlot"></div>
+      <!-- --- 5a. Trang chủ: con dấu của mọi người, 3 người một dòng --- -->
+      <div class="wish__view" id="wishHome">
+        <p class="wish__eyebrow">Sổ lưu bút</p>
+        <h2 class="wish__title">Lời chúc của mọi người</h2>
+
+        <button class="btn wish__new" type="button" id="wishNewBtn">Để lại lời chúc</button>
+
+        <p class="wish__empty" id="wishEmpty" hidden>
+          Chưa có ai để lại lời chúc.<br />Bạn mở màn đầu tiên nhé!
+        </p>
+        <ul class="stamps" id="stampList"></ul>
       </div>
+
+      <!-- --- 5b. Trang lời chúc của một người --- -->
+      <div class="wish__view" id="wishOne" hidden>
+        <button class="wish__back" type="button" id="wishBackBtn">Về sổ lưu bút</button>
+        <div class="note" id="noteBox"></div>
+      </div>
+
+      <!-- --- 5c. Trang viết lời chúc --- -->
+      <div class="wish__view" id="wishForm" hidden>
+        <button class="wish__back" type="button" id="formBackBtn">Về sổ lưu bút</button>
+        <h2 class="wish__title">Viết cho mình vài dòng</h2>
+
+        <form class="wishform" id="wishFormEl" novalidate>
+
+          <!-- 1. tên -->
+          <div class="field">
+            <label class="field__label" for="wishName">
+              <span class="field__num">1</span> Bạn tên gì?
+            </label>
+            <input
+              class="field__input" id="wishName" name="wishName" type="text"
+              placeholder="Tên của bạn" autocomplete="name" maxlength="40" required />
+            <p class="field__error" id="wishNameError" hidden>Cho mình xin cái tên với nhé!</p>
+          </div>
+
+          <!-- 2. con dấu: icon + màu mực -->
+          <fieldset class="field">
+            <legend class="field__label">
+              <span class="field__num">2</span> Chọn con dấu của bạn
+            </legend>
+            <div class="sealprev">
+              <div id="sealPrev"></div>
+              <p class="sealprev__hint">Con dấu này sẽ nằm ở trang chủ sổ lưu bút.</p>
+            </div>
+            <div class="picker" id="iconGrid" role="group" aria-label="Chọn icon"></div>
+            <div class="hues" id="hueRow" role="group" aria-label="Chọn màu mực"></div>
+          </fieldset>
+
+          <!-- 3. lời chúc + kiểu chữ -->
+          <div class="field">
+            <label class="field__label" for="wishText">
+              <span class="field__num">3</span> Lời chúc
+            </label>
+            <textarea
+              class="field__area" id="wishText" name="wishText" rows="5" maxlength="600"
+              placeholder="Viết gì cũng được, một câu thôi cũng vui rồi…" required></textarea>
+            <div class="fonts" id="fontRow" role="group" aria-label="Chọn kiểu chữ"></div>
+            <p class="field__error" id="wishTextError" hidden>Viết vài chữ thôi cũng được mà!</p>
+          </div>
+
+          <!-- 4. sticker: tự ẩn nếu thư mục assets/images/sticker/ chưa có ảnh -->
+          <fieldset class="field" id="stickerField" hidden>
+            <legend class="field__label">
+              <span class="field__num">4</span> Dán sticker cho đẹp
+              <span class="field__hint" id="stickerCount"></span>
+            </legend>
+            <div class="picker picker--sticker" id="stickerGrid" role="group" aria-label="Chọn sticker"></div>
+          </fieldset>
+
+          <button class="btn" type="submit" id="wishSubmit">Gửi lời chúc</button>
+          <p class="form-status" id="wishStatus" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
     </section>
 
   </div>
