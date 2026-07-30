@@ -13,7 +13,7 @@ const CONFIG = {
 
   /* Nơi nhận câu trả lời — dán link Google Apps Script (dạng .../exec) vào đây.
      Cách lấy: xem README.md và docs/apps-script.gs */
-  rsvpEndpoint: 'https://script.google.com/macros/s/AKfycbwf12iQH9UoNMvTRDDgJoZ_R2FjPfVsHwSC9DMRksgtl-bH20A6oqpadhK3S4ciAkqA/exec',
+  rsvpEndpoint: 'https://script.google.com/macros/s/AKfycbx7wZjpb0Xqo_QDOUmNnD5TM0TBSXTjlduUxomX2y9Lg_2zKcJeTyUvJP-U0ipSsfd1/exec',
 
   /* Khách chọn giờ đến trong khoảng này */
   hourFrom: 8,
@@ -42,7 +42,7 @@ const CONFIG = {
      Muốn dùng được thì phải dán docs/apps-script.gs vào Apps Script và Triển khai bản Mới;
      script còn bản cũ thì trang tự biết, chỉ lưu trong máy chứ không gửi lên (khỏi ghi rác).
      Để trống '' là tắt hẳn, lời chúc chỉ nằm trong máy người viết. */
-  wishEndpoint: 'https://script.google.com/macros/s/AKfycbwf12iQH9UoNMvTRDDgJoZ_R2FjPfVsHwSC9DMRksgtl-bH20A6oqpadhK3S4ciAkqA/exec',
+  wishEndpoint: 'https://script.google.com/macros/s/AKfycbx7wZjpb0Xqo_QDOUmNnD5TM0TBSXTjlduUxomX2y9Lg_2zKcJeTyUvJP-U0ipSsfd1/exec',
 
   /* Mỗi lời chúc dán được nhiều nhất mấy sticker */
   maxStickers: 5,
